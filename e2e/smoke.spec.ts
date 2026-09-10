@@ -38,6 +38,41 @@ test('unknown route shows the not-found page', async ({ page }) => {
   await expect(page.getByRole('heading', { name: /não encontrada/i })).toBeVisible()
 })
 
+test('cart: add, change quantity, coupon, remove, persist on reload', async ({ page }) => {
+  await page.goto('/nft/nft_5')
+  await page.getByRole('radio', { name: 'ABERTA' }).click() // open edition — plenty of stock
+  await page.getByRole('button', { name: 'COMPRAR' }).click()
+  await expect(page.getByText('Adicionado ao carrinho')).toBeVisible()
+
+  await page.goto('/carrinho')
+  const row = page.getByRole('listitem').filter({ hasText: 'Cosmic Bloom #005' })
+  await expect(row).toBeVisible()
+
+  // increase quantity
+  await row.getByRole('button', { name: 'Aumentar quantidade' }).click()
+  await expect(row.getByText('2', { exact: true })).toBeVisible()
+
+  // valid coupon reduces the total
+  await page.getByLabel('Código promocional').fill('GREEN10')
+  await page.getByRole('button', { name: 'Aplicar' }).click()
+  await expect(page.getByText(/Cupom .*GREEN10.* aplicado/)).toBeVisible()
+
+  // survives a reload (mock db is persisted)
+  await page.reload()
+  await expect(page.getByRole('listitem').filter({ hasText: 'Cosmic Bloom #005' })).toBeVisible()
+  await expect(page.getByText(/GREEN10.* aplicado/)).toBeVisible()
+
+  // invalid coupon is rejected
+  await page.getByLabel('Remover cupom').click()
+  await page.getByLabel('Código promocional').fill('WRONG')
+  await page.getByRole('button', { name: 'Aplicar' }).click()
+  await expect(page.getByRole('alert')).toContainText(/inválido/i)
+
+  // remove the item -> empty state
+  await page.getByRole('button', { name: /Remover .* do carrinho/ }).click()
+  await expect(page.getByText('Seu carrinho está vazio.')).toBeVisible()
+})
+
 test('NFT detail: direct access, add to cart, missing NFT', async ({ page }) => {
   // direct access to a detail URL works (SPA + loader)
   await page.goto('/nft/nft_3')

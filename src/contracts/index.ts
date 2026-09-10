@@ -129,10 +129,12 @@ export interface FavoritesResponse {
 export interface CartItem {
   nftId: string
   editionId: string
+  editionLabel: string
   quantity: number
   /** snapshot of unit price when added; revalidated at quote time */
   unitPriceEth: string
   name: string
+  tokenId: string
   image: string
   network: Network
   available: number

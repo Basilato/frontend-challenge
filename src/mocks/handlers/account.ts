@@ -8,7 +8,7 @@ import type {
   Quote,
   UpsertWalletRequest,
 } from '@/contracts'
-import { addEth, mulEth } from '@/lib/money'
+import { addEth, ethToWei, mulEth, weiToEth } from '@/lib/money'
 
 import { db, getSessionUser, persistDb } from '../db'
 import { applyLatency, scenario } from '../scenario'
@@ -42,10 +42,12 @@ function priceCart(cart: Cart, couponCode: string | null): Quote {
   if (couponCode) {
     const forced = scenario().couponForcedError
     if (forced) couponError = forced
-    else if (couponCode.toUpperCase() === 'GREEN10') discountEth = mulEth(subtotalEth, 1) // placeholder 10%
+    else if (couponCode.toUpperCase() === 'GREEN10') discountEth = weiToEth(ethToWei(subtotalEth) / 10n) // 10%
     else couponError = 'invalid'
   }
-  const totalEth = addEth(subtotalEth, NETWORK_FEE_ETH)
+  const totalEth = weiToEth(
+    ethToWei(subtotalEth) - ethToWei(discountEth) + ethToWei(NETWORK_FEE_ETH),
+  )
   return {
     lines,
     subtotalEth,
@@ -112,9 +114,11 @@ export const accountHandlers = [
       cart.items.push({
         nftId: nft.id,
         editionId: edition.id,
+        editionLabel: edition.label,
         quantity: body.quantity,
         unitPriceEth: edition.priceEth,
         name: nft.name,
+        tokenId: nft.tokenId,
         image: nft.image,
         network: nft.network,
         available: edition.available,
@@ -130,8 +134,23 @@ export const accountHandlers = [
     const { quantity } = (await request.json()) as { quantity: number }
     const item = cart.items.find((i) => i.editionId === String(params.editionId))
     if (!item) return HttpResponse.json({ message: 'Item não está no carrinho' }, { status: 404 })
-    if (quantity <= 0) cart.items = cart.items.filter((i) => i !== item)
-    else item.quantity = quantity
+    if (quantity <= 0) {
+      cart.items = cart.items.filter((i) => i !== item)
+    } else {
+      // re-check against live availability
+      const live = db.nfts
+        .find((n) => n.id === item.nftId)
+        ?.editions.find((e) => e.id === item.editionId)
+      const cap = live?.available ?? item.available
+      if (quantity > cap) {
+        return HttpResponse.json(
+          { message: `Apenas ${cap} unidade(s) disponível(is)`, code: 'unavailable' },
+          { status: 409 },
+        )
+      }
+      item.quantity = quantity
+      if (live) item.available = live.available
+    }
     cart.updatedAt = new Date().toISOString()
     persistDb()
     return HttpResponse.json(cart)
@@ -145,14 +164,43 @@ export const accountHandlers = [
     persistDb()
     return HttpResponse.json(cart)
   }),
+  http.put(API('/cart/coupon'), async ({ request }) => {
+    await applyLatency()
+    const key = requireUser(request)?.id ?? 'guest'
+    const cart = (db.carts[key] ??= emptyCart(key))
+    const { code } = (await request.json()) as { code: string }
+    const normalized = code.trim().toUpperCase()
+    const forced = scenario().couponForcedError
+    if (forced) {
+      return HttpResponse.json(
+        { message: forced === 'expired' ? 'Cupom expirado' : 'Cupom inválido', code: forced },
+        { status: 422 },
+      )
+    }
+    if (normalized !== 'GREEN10') {
+      return HttpResponse.json({ message: 'Cupom inválido', code: 'invalid' }, { status: 422 })
+    }
+    cart.couponCode = normalized
+    cart.updatedAt = new Date().toISOString()
+    persistDb()
+    return HttpResponse.json(cart)
+  }),
+  http.delete(API('/cart/coupon'), async ({ request }) => {
+    await applyLatency()
+    const key = requireUser(request)?.id ?? 'guest'
+    const cart = (db.carts[key] ??= emptyCart(key))
+    cart.couponCode = null
+    persistDb()
+    return HttpResponse.json(cart)
+  }),
 
   // -- quote ---------------------------------------------------------------
   http.post(API('/quote'), async ({ request }) => {
     await applyLatency()
     const key = requireUser(request)?.id ?? 'guest'
-    const { couponCode } = (await request.json()) as { cartId: string; couponCode?: string }
+    const body = (await request.json().catch(() => ({}))) as { couponCode?: string }
     const cart = db.carts[key] ?? emptyCart(key)
-    return HttpResponse.json(priceCart(cart, couponCode ?? null))
+    return HttpResponse.json(priceCart(cart, body.couponCode ?? cart.couponCode))
   }),
 
   // -- orders (idempotent) ------------------------------------------------
