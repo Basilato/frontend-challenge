@@ -73,6 +73,36 @@ function toApiError(error: unknown): ApiError {
   return new ApiError('unknown', error instanceof Error ? error.message : 'Erro desconhecido.')
 }
 
+/**
+ * Session token. The mock backend also sets a cookie, but service-worker
+ * responses don't reliably persist cookies across reloads, so we keep the token
+ * in localStorage and send it as a Bearer header.
+ */
+const TOKEN_KEY = 'greenmint.session.token'
+
+export function setSessionToken(token: string | null): void {
+  try {
+    if (token) localStorage.setItem(TOKEN_KEY, token)
+    else localStorage.removeItem(TOKEN_KEY)
+  } catch {
+    /* ignore */
+  }
+}
+
+export function getSessionToken(): string | null {
+  try {
+    return localStorage.getItem(TOKEN_KEY)
+  } catch {
+    return null
+  }
+}
+
+http.interceptors.request.use((config) => {
+  const token = getSessionToken()
+  if (token) config.headers.set('Authorization', `Bearer ${token}`)
+  return config
+})
+
 http.interceptors.response.use(
   (response) => response,
   (error) => Promise.reject(toApiError(error)),
@@ -88,6 +118,7 @@ export function onUnauthorized(listener: () => void): () => void {
 
 http.interceptors.response.use(undefined, (error) => {
   if (error instanceof ApiError && error.kind === 'unauthorized') {
+    setSessionToken(null)
     unauthorizedListeners.forEach((l) => l())
   }
   return Promise.reject(error)

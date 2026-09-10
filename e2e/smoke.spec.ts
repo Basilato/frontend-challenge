@@ -2,7 +2,14 @@ import { expect, test } from '@playwright/test'
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/')
-  await page.evaluate(() => (window as unknown as { __mock?: { resetDb(): void } }).__mock?.resetDb())
+  await page.evaluate(() => {
+    ;(window as unknown as { __mock?: { resetDb(): void } }).__mock?.resetDb()
+    try {
+      localStorage.removeItem('greenmint.session.token')
+    } catch {
+      /* ignore */
+    }
+  })
 })
 
 test('catalog lists NFTs from the mock backend', async ({ page }) => {
@@ -36,6 +43,44 @@ test('combined filters compose in the URL and reset pagination', async ({ page }
 test('unknown route shows the not-found page', async ({ page }) => {
   await page.goto('/rota-que-nao-existe')
   await expect(page.getByRole('heading', { name: /não encontrada/i })).toBeVisible()
+})
+
+test('auth: register conflict, login, session persists, logout', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'uses the desktop header menu')
+  // registering an existing email is rejected with a field error
+  await page.goto('/cadastro')
+  await page.getByLabel('Nome').fill('Duplicada')
+  await page.getByLabel('E-mail').fill('ada@greenmint.test')
+  await page.locator('#auth-password').fill('senha123')
+  await page.getByRole('button', { name: 'Criar conta' }).click()
+  await expect(page.getByRole('alert')).toContainText(/já cadastrado/i)
+
+  // login with the seeded credentials
+  await page.goto('/login')
+  await page.getByLabel('E-mail').fill('ada@greenmint.test')
+  await page.locator('#auth-password').fill('senha123')
+  await page.getByRole('button', { name: 'Entrar' }).click()
+  await expect(page.getByRole('button', { name: /Ada/ })).toBeVisible()
+
+  // session survives a reload
+  await page.reload()
+  await expect(page.getByRole('button', { name: /Ada/ })).toBeVisible()
+
+  // logout clears the session
+  await page.getByRole('button', { name: /Ada/ }).click()
+  await page.getByRole('menuitem', { name: 'Sair' }).click()
+  await expect(page.getByRole('link', { name: /Entrar/ })).toBeVisible()
+})
+
+test('auth: login returns to the page that required it', async ({ page }) => {
+  await page.goto('/nft/nft_1')
+  await page.getByRole('button', { name: 'Favoritar' }).click()
+  // signed out -> prompted; go log in
+  await page.goto('/login?redirect=' + encodeURIComponent('/carrinho'))
+  await page.getByLabel('E-mail').fill('bruno@greenmint.test')
+  await page.locator('#auth-password').fill('senha123')
+  await page.getByRole('button', { name: 'Entrar' }).click()
+  await expect(page).toHaveURL(/\/carrinho/)
 })
 
 test('cart: add, change quantity, coupon, remove, persist on reload', async ({ page }) => {

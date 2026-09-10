@@ -1,9 +1,13 @@
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
+import { ChevronDown } from 'lucide-react'
+import { toast } from 'sonner'
 
 import { CartIcon, LogoutIcon, SearchIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
 import { cartItemCount, cartQuery } from '@/features/cart/api'
+import { useLogout } from '@/features/auth/api'
 import { useAuth } from '@/features/auth/useAuth'
 
 const NAV = [
@@ -17,6 +21,8 @@ export function Header() {
   const { isAuthenticated, user } = useAuth()
   const { data: cart } = useQuery(cartQuery(user?.id ?? 'guest'))
   const count = cartItemCount(cart)
+  const navigate = useNavigate()
+  const logout = useLogout()
 
   return (
     <header>
@@ -66,9 +72,52 @@ export function Header() {
             </Link>
 
             {isAuthenticated ? (
-              <Button asChild size="sm">
-                <Link to="/perfil">{user?.name.split(' ')[0]}</Link>
-              </Button>
+              <DropdownMenu.Root>
+                <DropdownMenu.Trigger asChild>
+                  <button
+                    type="button"
+                    className="flex items-center gap-1.5 rounded bg-secondary px-3 py-1.5 text-sm text-fg"
+                  >
+                    {user?.name.split(' ')[0]}
+                    <ChevronDown className="size-3.5" />
+                  </button>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Portal>
+                  <DropdownMenu.Content
+                    align="end"
+                    sideOffset={8}
+                    className="z-50 min-w-[160px] rounded-[8px] border border-border bg-surface-card p-1 text-sm shadow-lg"
+                  >
+                    {[
+                      { label: 'Meu perfil', to: '/perfil' as const },
+                      { label: 'Carteiras', to: '/carteiras' as const },
+                      { label: 'Favoritos', to: '/favoritos' as const },
+                    ].map((item) => (
+                      <DropdownMenu.Item
+                        key={item.to}
+                        onSelect={() => navigate({ to: item.to })}
+                        className="cursor-pointer rounded px-3 py-2 text-fg outline-none data-[highlighted]:bg-surface-dark"
+                      >
+                        {item.label}
+                      </DropdownMenu.Item>
+                    ))}
+                    <DropdownMenu.Separator className="my-1 h-px bg-border" />
+                    <DropdownMenu.Item
+                      onSelect={() =>
+                        logout.mutate(undefined, {
+                          onSuccess: () => {
+                            toast.success('Você saiu da conta.')
+                            navigate({ to: '/' })
+                          },
+                        })
+                      }
+                      className="cursor-pointer rounded px-3 py-2 text-text-accent outline-none data-[highlighted]:bg-surface-dark"
+                    >
+                      Sair
+                    </DropdownMenu.Item>
+                  </DropdownMenu.Content>
+                </DropdownMenu.Portal>
+              </DropdownMenu.Root>
             ) : (
               <Button asChild>
                 <Link to="/login">

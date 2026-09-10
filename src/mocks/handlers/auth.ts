@@ -16,6 +16,25 @@ function issueSession(userId: string): Session & { token: string } {
   const token = `tok_${userId}_${Date.now()}_${Math.random().toString(36).slice(2)}`
   const expiresAt = Date.now() + SESSION_TTL
   db.sessions[token] = { userId, expiresAt }
+
+  // Preserve the visitor's cart when they authenticate.
+  const guestCart = db.carts['guest']
+  if (guestCart && guestCart.items.length) {
+    const userCart = (db.carts[userId] ??= {
+      id: `cart_${userId}`,
+      items: [],
+      couponCode: null,
+      updatedAt: new Date().toISOString(),
+    })
+    for (const item of guestCart.items) {
+      const existing = userCart.items.find((i) => i.editionId === item.editionId)
+      if (existing) existing.quantity += item.quantity
+      else userCart.items.push({ ...item })
+    }
+    userCart.couponCode ??= guestCart.couponCode
+    db.carts['guest'] = { ...guestCart, items: [], couponCode: null }
+  }
+
   persistDb()
   const user = db.users.find((u) => u.id === userId)!
   return { token, user: publicUser(user), expiresAt: new Date(expiresAt).toISOString() }
