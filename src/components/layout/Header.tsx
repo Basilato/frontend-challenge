@@ -1,5 +1,9 @@
+import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 
+import { CartIcon, LogoutIcon, SearchIcon } from '@/components/icons'
+import { Button } from '@/components/ui/button'
+import { cartItemCount, cartQuery } from '@/features/cart/api'
 import { useAuth } from '@/features/auth/useAuth'
 
 const NAV = [
@@ -11,38 +15,71 @@ const NAV = [
 
 export function Header() {
   const { isAuthenticated, user } = useAuth()
+  const { data: cart } = useQuery(cartQuery(user?.id ?? 'guest'))
+  const count = cartItemCount(cart)
 
   return (
-    <header className="border-b border-border bg-surface-card/60 backdrop-blur">
-      <div className="mx-auto flex h-14 w-full max-w-[1240px] items-center gap-6 px-4 md:px-6">
-        <Link to="/" className="font-bold tracking-widest text-text-accent">
-          KURIO
-        </Link>
-        <nav aria-label="Principal" className="hidden gap-5 text-xs md:flex">
-          {NAV.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              className="text-text-secondary hover:text-foreground [&.active]:text-foreground"
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-        <div className="ml-auto flex items-center gap-3 text-xs">
-          <Link to="/carrinho" className="text-text-secondary hover:text-foreground">
-            Carrinho
+    <header>
+      <div className="mx-auto w-full max-w-[1200px] px-4 md:px-0">
+        <div className="flex items-center justify-between py-6">
+          <Link
+            to="/"
+            className="text-sm font-bold tracking-[1.4px] text-fg"
+            aria-label="Kurio — início"
+          >
+            KURIO
           </Link>
-          {isAuthenticated ? (
-            <Link to="/perfil" className="rounded bg-secondary px-3 py-1.5 text-foreground">
-              {user?.name.split(' ')[0]}
+
+          <nav aria-label="Navegação principal" className="hidden items-start gap-10 md:flex">
+            {NAV.map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                activeOptions={{ exact: item.to === '/', includeSearch: false }}
+                className="border-b-[3px] border-transparent pb-1.5 text-base transition-colors hover:text-text-accent [&.active]:border-primary [&.active]:font-bold [&.active]:text-text-accent"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+
+          <div className="flex items-center gap-7">
+            <button
+              type="button"
+              aria-label="Buscar"
+              className="text-fg transition-colors hover:text-text-accent"
+            >
+              <SearchIcon className="size-5" />
+            </button>
+
+            <Link
+              to="/carrinho"
+              aria-label={`Carrinho${count ? `, ${count} ${count === 1 ? 'item' : 'itens'}` : ' vazio'}`}
+              className="relative text-fg transition-colors hover:text-text-accent"
+            >
+              <CartIcon className="size-6" />
+              {count > 0 && (
+                <span className="absolute -right-1.5 -top-1 flex size-4 items-center justify-center rounded-full border-2 border-ink bg-primary text-[10px] font-medium leading-none text-ink">
+                  {count > 9 ? '9+' : count}
+                </span>
+              )}
             </Link>
-          ) : (
-            <Link to="/login" className="rounded bg-primary px-3 py-1.5 text-primary-foreground">
-              Entrar
-            </Link>
-          )}
+
+            {isAuthenticated ? (
+              <Button asChild size="sm">
+                <Link to="/perfil">{user?.name.split(' ')[0]}</Link>
+              </Button>
+            ) : (
+              <Button asChild>
+                <Link to="/login">
+                  <LogoutIcon className="size-5" />
+                  Entrar
+                </Link>
+              </Button>
+            )}
+          </div>
         </div>
+        <div className="h-px w-full bg-primary/40" />
       </div>
     </header>
   )

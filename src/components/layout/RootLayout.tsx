@@ -13,7 +13,7 @@ export function RootLayout({ children }: { children: ReactNode }) {
         Pular para o conteúdo
       </a>
       <Header />
-      <main id="main" className="mx-auto w-full max-w-[1240px] flex-1 px-4 py-8 md:px-6">
+      <main id="main" className="mx-auto w-full max-w-[1200px] flex-1 px-4 py-10 md:px-0">
         {children}
       </main>
       <Footer />

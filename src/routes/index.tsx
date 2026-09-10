@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 
+import { Hero } from '@/components/Hero'
 import { formatEth } from '@/lib/money'
 import { nftListQuery } from '@/features/catalog/api'
 import { catalogSearchSchema, searchToParams } from '@/features/catalog/search'
@@ -21,17 +22,10 @@ function CatalogPage() {
   )
 
   return (
-    <section className="space-y-6">
-      <div className="rounded-card bg-surface-card p-8">
-        <p className="text-xs uppercase tracking-widest text-text-secondary">Bem-vindo à Kurio</p>
-        <h1 className="mt-2 max-w-xl text-3xl font-bold leading-tight text-foreground md:text-[43px]">
-          Seja dono do futuro da arte digital
-        </h1>
-        <p className="mt-3 max-w-lg text-sm text-text-secondary">
-          Descubra NFTs selecionados de criadores emergentes e consagrados.
-        </p>
-      </div>
+    <div className="space-y-10">
+      <Hero />
 
+      <section id="catalogo" className="scroll-mt-8 space-y-6">
       <div className="flex flex-wrap items-center gap-2">
         {(['all', 'new', 'trending'] as const).map((tab) => (
           <button
@@ -106,7 +100,8 @@ function CatalogPage() {
           ))}
         </nav>
       )}
-    </section>
+      </section>
+    </div>
   )
 }
 
