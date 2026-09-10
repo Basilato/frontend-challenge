@@ -36,9 +36,15 @@ export interface NftSummary {
 
 export interface NftDetail extends NftSummary {
   description: string
+  longDescription: string
   gallery: string[]
   editions: NftEdition[]
   attributes: { trait: string; value: string }[]
+  tokenId: string
+  contractAddress: string
+  royaltiesPct: number
+  rating: number
+  reviewCount: number
 }
 
 // ---------------------------------------------------------------------------

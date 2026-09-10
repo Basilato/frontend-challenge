@@ -38,6 +38,20 @@ test('unknown route shows the not-found page', async ({ page }) => {
   await expect(page.getByRole('heading', { name: /não encontrada/i })).toBeVisible()
 })
 
+test('NFT detail: direct access, add to cart, missing NFT', async ({ page }) => {
+  // direct access to a detail URL works (SPA + loader)
+  await page.goto('/nft/nft_3')
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+
+  // add to cart confirms via toast
+  await page.getByRole('button', { name: 'COMPRAR' }).click()
+  await expect(page.getByText('Adicionado ao carrinho')).toBeVisible()
+
+  // unknown id shows the not-found state, not a crash
+  await page.goto('/nft/nope-404')
+  await expect(page.getByRole('heading', { name: /não encontrado/i })).toBeVisible()
+})
+
 test('mobile shows the bottom tab bar and can navigate', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium-mobile', 'mobile only')
   await page.goto('/')

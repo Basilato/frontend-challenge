@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react'
 
+import { Toaster } from '@/components/ui/toaster'
+
 import { Footer } from './Footer'
 import { Header } from './Header'
 import { MobileTabBar } from './MobileTabBar'
@@ -31,6 +33,7 @@ export function RootLayout({ children }: { children: ReactNode }) {
         <Footer />
       </div>
       <MobileTabBar />
+      <Toaster />
     </div>
   )
 }

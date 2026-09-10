@@ -56,22 +56,47 @@ export function buildNfts(count = 24): NftDetail[] {
       listedAt,
       createdAt,
       description:
-        'Curated digital artwork from the GreenMint marketplace. Collect rare pieces from emerging and established creators.',
-      gallery: [img(`${i + 1}`, 900), img(`${i + 1}-b`, 900), img(`${i + 1}-c`, 900)],
+        'Um colecionável digital finalizado à mão da coleção Kurio Editions, verificado na Ethereum, com arte desbloqueável e acesso para colecionadores.',
+      longDescription:
+        `${name} é uma obra digital 1/50 finalizada à mão da coleção Kurio Editions. Cada atributo fica armazenado nos metadados do token e verificado na rede. A obra explora identidade, movimento e luz em um mundo digital sem fronteiras.\n\nA propriedade inclui a arte em alta resolução, lançamentos exclusivos para colecionadores e um registro permanente de procedência registrada na rede.`,
+      gallery: [
+        img(`${i + 1}`, 900),
+        img(`${i + 1}-b`, 900),
+        img(`${i + 1}-c`, 900),
+        img(`${i + 1}-d`, 900),
+      ],
       editions: [
-        { id: `nft_${i + 1}_ed_std`, label: 'Standard', priceEth: price, available },
+        { id: `nft_${i + 1}_ed_std`, label: '1/1', priceEth: price, available: i % 7 === 0 ? 0 : 1 },
         {
-          id: `nft_${i + 1}_ed_rare`,
-          label: 'Rare',
+          id: `nft_${i + 1}_ed_10`,
+          label: '1/10',
+          priceEth: (Number(price) + 0.2).toFixed(2),
+          available: i % 4 === 0 ? 0 : 3,
+        },
+        {
+          id: `nft_${i + 1}_ed_50`,
+          label: '1/50',
           priceEth: (Number(price) + 0.5).toFixed(2),
-          available: i % 3 === 0 ? 0 : 2,
+          available,
+        },
+        {
+          id: `nft_${i + 1}_ed_open`,
+          label: 'ABERTA',
+          priceEth: (Number(price) + 0.8).toFixed(2),
+          available: 99,
         },
       ],
       attributes: [
-        { trait: 'Collection', value: collection },
-        { trait: 'Network', value: NETWORKS[i % NETWORKS.length]! },
-        { trait: 'Rarity', value: ['Common', 'Uncommon', 'Rare', 'Legendary'][i % 4]! },
+        { trait: 'Coleção', value: collection },
+        { trait: 'Rede', value: NETWORKS[i % NETWORKS.length]! },
+        { trait: 'Raridade', value: ['Comum', 'Incomum', 'Raro', 'Lendário'][i % 4]! },
+        { trait: 'Traço', value: ['Óculos', 'Esmeralda', 'Chapéu', 'Fone'][i % 4]! },
       ],
+      tokenId: `#${String(i + 1).padStart(4, '0')}`,
+      contractAddress: `0x7A42${(i * 7).toString(16).padStart(4, '0')}...19E8`,
+      royaltiesPct: 5,
+      rating: 3.5 + ((i * 7) % 15) / 10,
+      reviewCount: 8 + ((i * 13) % 40),
     }
   })
 }
