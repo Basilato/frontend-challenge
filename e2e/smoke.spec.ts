@@ -123,6 +123,41 @@ test('checkout requires auth', async ({ page }) => {
   await expect(page).toHaveURL(/\/login/)
 })
 
+test('account: profile requires auth, then edit + password + wallet validation', async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'uses the desktop header')
+  await page.goto('/perfil')
+  await expect(page).toHaveURL(/\/login/)
+
+  await page.getByLabel('E-mail').fill('ada@greenmint.test')
+  await page.locator('#auth-password').fill('senha123')
+  await page.getByRole('button', { name: 'Entrar' }).click()
+  await expect(page).toHaveURL(/\/perfil/)
+
+  // email already taken -> field error from the API
+  await page.getByLabel(/Nome de exibição/).fill('Ada V.')
+  await page.getByLabel('E-mail *').fill('bruno@greenmint.test')
+  await page.getByRole('button', { name: 'Salvar' }).first().click()
+  await expect(page.getByRole('alert')).toContainText(/uso/i)
+
+  // wrong current password -> field error
+  await page.getByLabel('Senha atual').fill('errada')
+  await page.getByLabel('Nova senha', { exact: true }).fill('novasenha1')
+  await page.getByLabel('Confirmar nova senha').fill('novasenha1')
+  await page.getByRole('button', { name: 'Salvar' }).nth(1).click()
+  await expect(page.getByText(/Senha atual incorreta/i)).toBeVisible()
+
+  // wallets: invalid address is rejected client-side
+  await page.goto('/carteiras')
+  const secondary = page.locator('form').filter({ hasText: 'Carteira secundária' })
+  await secondary.getByLabel(/Apelido/).fill('Reserva')
+  await secondary.getByLabel(/Endereço/).fill('nope')
+  await secondary.getByRole('button', { name: 'Ethereum' }).click()
+  await secondary.getByRole('button', { name: 'Salvar carteira' }).click()
+  await expect(secondary.getByText(/inválido/i)).toBeVisible()
+})
+
 test('checkout: full purchase to a confirmed order that survives reload', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium-desktop', 'uses the desktop header')
   await page.goto('/login')

@@ -63,7 +63,7 @@ function toApiError(error: unknown): ApiError {
       case 404:
         return new ApiError('not-found', message, { status })
       case 409:
-        return new ApiError('conflict', message, { status, payload: data })
+        return new ApiError('conflict', message, { status, fields: data?.fields, payload: data })
       default:
         if (status && status >= 500) return new ApiError('transient', message, { status })
         if (!error.response) return new ApiError('network', 'Sem conexão com o servidor.')
