@@ -23,3 +23,19 @@ test('unknown route shows the not-found page', async ({ page }) => {
   await page.goto('/rota-que-nao-existe')
   await expect(page.getByRole('heading', { name: /não encontrada/i })).toBeVisible()
 })
+
+test('mobile shows the bottom tab bar and can navigate', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-mobile', 'mobile only')
+  await page.goto('/')
+  const nav = page.getByRole('navigation', { name: 'Navegação' })
+  await expect(nav).toBeVisible()
+  await nav.getByRole('link', { name: 'Carrinho' }).click()
+  await expect(page).toHaveURL(/\/carrinho$/)
+})
+
+test('desktop hides the mobile tab bar', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'desktop only')
+  await page.goto('/')
+  await expect(page.getByRole('navigation', { name: 'Navegação' })).toBeHidden()
+  await expect(page.getByRole('navigation', { name: 'Navegação principal' })).toBeVisible()
+})

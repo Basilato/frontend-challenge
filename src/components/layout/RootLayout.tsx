@@ -2,6 +2,8 @@ import type { ReactNode } from 'react'
 
 import { Footer } from './Footer'
 import { Header } from './Header'
+import { MobileTabBar } from './MobileTabBar'
+import { MobileTopBar } from './MobileTopBar'
 
 export function RootLayout({ children }: { children: ReactNode }) {
   return (
@@ -12,11 +14,23 @@ export function RootLayout({ children }: { children: ReactNode }) {
       >
         Pular para o conteúdo
       </a>
-      <Header />
-      <main id="main" className="mx-auto w-full max-w-[1200px] flex-1 px-4 py-10 md:px-0">
+
+      <div className="hidden md:block">
+        <Header />
+      </div>
+      <MobileTopBar />
+
+      <main
+        id="main"
+        className="mx-auto w-full max-w-[1200px] flex-1 px-4 pb-28 pt-4 md:px-0 md:pb-0 md:pt-10"
+      >
         {children}
       </main>
-      <Footer />
+
+      <div className="hidden md:block">
+        <Footer />
+      </div>
+      <MobileTabBar />
     </div>
   )
 }
