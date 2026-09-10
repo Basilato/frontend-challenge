@@ -13,10 +13,24 @@ test('catalog lists NFTs from the mock backend', async ({ page }) => {
 
 test('catalog state lives in the URL and survives reload', async ({ page }) => {
   await page.goto('/')
-  await page.getByRole('button', { name: 'Em alta' }).click()
+  await page.getByRole('tab', { name: 'Em alta' }).click()
   await expect(page).toHaveURL(/tab=trending/)
   await page.reload()
-  await expect(page.getByRole('button', { name: 'Em alta' })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByRole('tab', { name: 'Em alta' })).toHaveAttribute('aria-selected', 'true')
+})
+
+test('combined filters compose in the URL and reset pagination', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'sidebar is desktop-only')
+  await page.goto('/')
+  await page.getByRole('button', { name: /Ethereum/ }).click()
+  await expect(page).toHaveURL(/networks=.*ethereum/)
+  await page.getByRole('button', { name: /Fotografia/ }).click()
+  await expect(page).toHaveURL(/collections=.*Fotografia/)
+  await expect(page).toHaveURL(/networks=.*ethereum/)
+  await expect(page.getByRole('button', { name: /Ethereum/ })).toHaveAttribute('aria-pressed', 'true')
+  // the grid actually reflects the query
+  const shown = await page.locator('li a[href^="/nft/"]').count()
+  expect(shown).toBeLessThan(9)
 })
 
 test('unknown route shows the not-found page', async ({ page }) => {

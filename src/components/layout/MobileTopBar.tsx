@@ -35,6 +35,7 @@ export function MobileTopBar() {
       <button
         type="button"
         aria-label="Filtros"
+        onClick={() => navigate({ to: '/', search: (prev) => ({ ...prev, filtersOpen: true }) })}
         className="flex size-[45px] shrink-0 items-center justify-center rounded-[14px] bg-[linear-gradient(137deg,rgba(210,138,76,0.45)_25%,var(--color-primary)_100%)] text-ink"
       >
         <FilterIcon className="size-[22px]" />

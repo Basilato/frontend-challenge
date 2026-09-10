@@ -70,6 +70,17 @@ export interface Paginated<T> {
 
 export type NftListResponse = Paginated<NftSummary>
 
+export interface FacetCount {
+  value: string
+  count: number
+}
+
+export interface CatalogFacets {
+  collections: FacetCount[]
+  networks: FacetCount[]
+  priceRangeEth: { minEth: string; maxEth: string }
+}
+
 // ---------------------------------------------------------------------------
 // Session & account
 // ---------------------------------------------------------------------------

@@ -17,6 +17,8 @@ export const catalogSearchSchema = z.object({
   tab: fallback(z.enum(['all', 'new', 'trending']), 'all').default('all'),
   sort: fallback(z.enum(['recent', 'price-asc', 'price-desc', 'name']), 'recent').default('recent'),
   page: fallback(z.coerce.number().int().min(1), 1).default(1),
+  // Transient UI state (mobile filter drawer). Not sent to the API.
+  filtersOpen: fallback(z.coerce.boolean(), false).default(false),
 })
 
 export type CatalogSearch = z.infer<typeof catalogSearchSchema>

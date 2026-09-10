@@ -5,13 +5,17 @@ import type { NftDetail, Network, User, Wallet } from '@/contracts'
  * search, every filter, sorting and pagination (CLAUDE.md / MSW guide).
  */
 
+/** Collection taxonomy — matches the filter categories in the Figma sidebar. */
 export const COLLECTIONS = [
-  'Emerald Apes',
-  'Sage Nomads',
-  'Neon Vessels',
-  'Golden Bots',
-  'Cosmic Bloom',
-  'Violet Hours',
+  'Arte digital',
+  'Fotografia',
+  'Música',
+  'Arte 3D',
+  'Colecionáveis',
+  'Generativa',
+  'Jogos',
+  'Assinaturas',
+  'Utilidade',
 ] as const
 
 const NETWORKS: Network[] = ['ethereum', 'polygon', 'solana']

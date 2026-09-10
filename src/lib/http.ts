@@ -9,6 +9,9 @@ export const http: AxiosInstance = axios.create({
   timeout: 15_000,
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true,
+  // Arrays as repeated keys (`collections=a&collections=b`) so the MSW handlers
+  // can read them with `searchParams.getAll(...)`. Must match on both sides.
+  paramsSerializer: { indexes: null },
 })
 
 export type ApiErrorKind =
