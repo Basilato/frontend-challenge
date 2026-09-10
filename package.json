@@ -1,0 +1,61 @@
+{
+  "name": "greenmint-nft-marketplace",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22.19"
+  },
+  "packageManager": "pnpm@9.15.5",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview --port 4173",
+    "lint": "oxlint",
+    "typecheck": "tsc -b --noEmit",
+    "test:e2e": "playwright test",
+    "test:visual": "playwright test --grep @visual",
+    "test:e2e:update": "playwright test --update-snapshots",
+    "audit:lighthouse": "node ./lighthouse/run.mjs"
+  },
+  "dependencies": {
+    "@fontsource-variable/roboto-mono": "^5.3.0",
+    "@tanstack/react-query": "^5.102.8",
+    "@tanstack/react-router": "^1.170.35",
+    "@tanstack/zod-adapter": "^1.167.0",
+    "axios": "^1.20.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.44.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "socket.io-client": "^4.8.3",
+    "tailwind-merge": "^3.6.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@mswjs/socket.io-binding": "^0.2.0",
+    "@playwright/test": "^1.63.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "@tanstack/react-query-devtools": "^5.102.8",
+    "@tanstack/react-router-devtools": "^1.167.1",
+    "@tanstack/router-plugin": "^1.168.37",
+    "@types/node": "^24.13.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "lighthouse": "^13.4.1",
+    "msw": "^2.15.0",
+    "oxlint": "^1.81.0",
+    "prettier": "^3.9.6",
+    "prettier-plugin-tailwindcss": "^0.8.1",
+    "tailwindcss": "^4.3.3",
+    "typescript": "~6.0.2",
+    "vite": "^8.3.0"
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
+  }
+}

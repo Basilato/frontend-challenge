@@ -1,0 +1,140 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/roboto-mono';
+
+/*
+  Design tokens extracted from Figma (get_variable_defs on the "Desktop / Início" frame).
+  Marketplace de NFTs GreenMint — dark identity. Font: Roboto Mono.
+  Semantic (shadcn-compatible) vars are derived from these primitives.
+*/
+@theme {
+  --font-mono: 'Roboto Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-sans: var(--font-mono);
+  --font-display: var(--font-mono);
+
+  /* Figma primitives */
+  --color-ink: #140d0a;
+  --color-surface-dark: #38220f;
+  --color-surface-card: #241612;
+  --color-bg-elevated: #fbfbfb;
+  --color-fg: #f5f1eb;
+  --color-text-primary: #f7f3ec;
+  --color-text-secondary: #cfb28c;
+  --color-text-accent: #e89b55;
+  --color-primary: #d28a4c;
+  --color-secondary: #b39463;
+  --color-border: #3f2319;
+  --color-border-soft: #55321f;
+
+  /* Type scale (Figma) */
+  --text-tiny: 0.5625rem;    /* 9 */
+  --text-2xs: 0.625rem;      /* 10 */
+  --text-xs: 0.75rem;        /* 12 */
+  --text-sm: 0.875rem;       /* 14 */
+  --text-base: 0.9375rem;    /* 15 */
+  --text-md: 1rem;           /* 16 */
+  --text-lg: 1.125rem;       /* 18 */
+  --text-xl: 1.5rem;         /* 24 — Heading */
+  --text-display: 2.6875rem; /* 43 — Display */
+
+  --radius-card: 12px;
+}
+
+/* Semantic tokens (shadcn/ui reads these) — mapped to the Figma identity, not the default theme. */
+:root {
+  --background: var(--color-ink);
+  --foreground: var(--color-fg);
+  --card: var(--color-surface-card);
+  --card-foreground: var(--color-fg);
+  --popover: var(--color-surface-card);
+  --popover-foreground: var(--color-fg);
+  --primary: var(--color-primary);
+  --primary-foreground: var(--color-ink);
+  --secondary: var(--color-surface-dark);
+  --secondary-foreground: var(--color-fg);
+  --muted: var(--color-surface-dark);
+  --muted-foreground: var(--color-text-secondary);
+  --accent: var(--color-text-accent);
+  --accent-foreground: var(--color-ink);
+  --destructive: #e5484d;
+  --destructive-foreground: #fff;
+  --border: var(--color-border);
+  --input: var(--color-border-soft);
+  --ring: var(--color-primary);
+  --radius: 0.75rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  html {
+    color-scheme: dark;
+  }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: var(--color-ink);
+    color: var(--color-fg);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+
+/* Skeleton shimmer — disabled under reduced-motion (see CLAUDE.md rule 9). */
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+.shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--color-fg) 8%, transparent),
+    transparent
+  );
+  animation: shimmer 1.6s infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .shimmer::after {
+    animation: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
