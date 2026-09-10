@@ -13,6 +13,7 @@ export type ScenarioName =
   | 'price-changed-during-checkout'
   | 'order-timeout-then-recover'
   | 'payment-rejected'
+  | 'wallet-connect-rejected'
 
 export interface ScenarioConfig {
   name: ScenarioName
@@ -32,6 +33,8 @@ export interface ScenarioConfig {
   orderFirstAttemptTimesOut: boolean
   /** order.updated resolves to 'rejected' instead of 'confirmed' */
   paymentRejected: boolean
+  /** wallet connection simulation is refused */
+  walletConnectRejected: boolean
 }
 
 const PRESETS: Record<ScenarioName, ScenarioConfig> = {
@@ -50,6 +53,10 @@ const PRESETS: Record<ScenarioName, ScenarioConfig> = {
     orderFirstAttemptTimesOut: true,
   },
   'payment-rejected': { ...base('payment-rejected'), paymentRejected: true },
+  'wallet-connect-rejected': {
+    ...base('wallet-connect-rejected'),
+    walletConnectRejected: true,
+  },
 }
 
 function base(name: ScenarioName): ScenarioConfig {
@@ -64,6 +71,7 @@ function base(name: ScenarioName): ScenarioConfig {
     bumpCartPriceOnCheckout: false,
     orderFirstAttemptTimesOut: false,
     paymentRejected: false,
+    walletConnectRejected: false,
   }
 }
 

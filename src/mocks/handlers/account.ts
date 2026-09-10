@@ -253,6 +253,7 @@ export const accountHandlers = [
     if (!user) return unauthorized()
     const order = db.orders[String(params.id)]
     if (!order) return HttpResponse.json({ message: 'Pedido não encontrado' }, { status: 404 })
+    settleOrder(order)
     return HttpResponse.json(order)
   }),
 
@@ -292,6 +293,23 @@ export const accountHandlers = [
     if (!user) return unauthorized()
     return HttpResponse.json(db.wallets[user.id] ?? [])
   }),
+  http.post(API('/wallets/connect'), async ({ request }) => {
+    await applyLatency()
+    const user = requireUser(request)
+    if (!user) return unauthorized()
+    await new Promise((r) => setTimeout(r, 900))
+    if (scenario().walletConnectRejected) {
+      return HttpResponse.json(
+        { message: 'Conexão recusada na carteira.', code: 'rejected' },
+        { status: 409 },
+      )
+    }
+    const { provider } = (await request.json()) as { provider: string }
+    return HttpResponse.json({
+      provider,
+      address: `0x${user.id.replace(/[^a-f0-9]/gi, '0').padEnd(40, '4').slice(0, 40)}`,
+    })
+  }),
   http.put(API('/wallets/:role'), async ({ request, params }) => {
     await applyLatency()
     const user = requireUser(request)
@@ -308,34 +326,61 @@ export const accountHandlers = [
   }),
 ]
 
+const SETTLE_MS = 2500
+
 function createOrder(
-  idempotencyKey: string,
+  _idempotencyKey: string,
   body: CreateOrderRequest,
   quote: Quote,
   userId: string,
 ): Order {
-  void idempotencyKey
-  void userId
+  const wallet = db.wallets[userId]?.find((w) => w.id === body.walletId)
   return {
     id: `order_${Math.random().toString(36).slice(2, 10)}`,
     status: 'pending',
     version: 1,
     createdAt: new Date().toISOString(),
     walletId: body.walletId,
+    walletLabel: wallet?.label ?? 'Carteira',
     network: body.network,
-    items: quote.lines.map((l) => ({
-      nftId: l.nftId,
-      editionId: l.editionId,
-      name: db.nfts.find((n) => n.id === l.nftId)?.name ?? l.nftId,
-      quantity: l.quantity,
-      unitPriceEth: l.unitPriceEth,
-      lineTotalEth: l.lineTotalEth,
-    })),
+    collector: body.collector,
+    items: quote.lines.map((l) => {
+      const nft = db.nfts.find((n) => n.id === l.nftId)
+      const edition = nft?.editions.find((e) => e.id === l.editionId)
+      return {
+        nftId: l.nftId,
+        editionId: l.editionId,
+        editionLabel: edition?.label ?? '',
+        name: nft?.name ?? l.nftId,
+        tokenId: nft?.tokenId ?? '',
+        image: nft?.image ?? '',
+        quantity: l.quantity,
+        unitPriceEth: l.unitPriceEth,
+        lineTotalEth: l.lineTotalEth,
+      }
+    }),
     subtotalEth: quote.subtotalEth,
     discountEth: quote.discountEth,
     networkFeeEth: quote.networkFeeEth,
     totalEth: quote.totalEth,
     transactionRef: null,
     explorerUrl: null,
+    rejectionReason: null,
   }
+}
+
+/** Async settlement: a pending order resolves to confirmed/rejected after a delay. */
+function settleOrder(order: Order): void {
+  if (order.status !== 'pending') return
+  if (Date.now() - new Date(order.createdAt).getTime() < SETTLE_MS) return
+  order.version += 1
+  if (scenario().paymentRejected) {
+    order.status = 'rejected'
+    order.rejectionReason = 'A carteira recusou a transação.'
+  } else {
+    order.status = 'confirmed'
+    order.transactionRef = `0x${Math.random().toString(16).slice(2).padEnd(40, '0').slice(0, 40)}`
+    order.explorerUrl = `https://example-explorer.test/tx/${order.transactionRef}`
+  }
+  persistDb()
 }

@@ -192,7 +192,10 @@ export type OrderStatus = 'pending' | 'confirmed' | 'rejected'
 export interface OrderItemReceipt {
   nftId: string
   editionId: string
+  editionLabel: string
   name: string
+  tokenId: string
+  image: string
   quantity: number
   unitPriceEth: string
   lineTotalEth: string
@@ -205,7 +208,9 @@ export interface Order {
   version: number
   createdAt: string
   walletId: string
+  walletLabel: string
   network: Network
+  collector: { name: string; email: string }
   items: OrderItemReceipt[]
   subtotalEth: string
   discountEth: string
@@ -213,6 +218,7 @@ export interface Order {
   totalEth: string
   transactionRef: string | null
   explorerUrl: string | null
+  rejectionReason: string | null
 }
 
 export interface CreateOrderRequest {

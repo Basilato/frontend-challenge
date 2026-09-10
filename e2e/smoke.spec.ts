@@ -118,6 +118,41 @@ test('cart: add, change quantity, coupon, remove, persist on reload', async ({ p
   await expect(page.getByText('Seu carrinho está vazio.')).toBeVisible()
 })
 
+test('checkout requires auth', async ({ page }) => {
+  await page.goto('/pagamento')
+  await expect(page).toHaveURL(/\/login/)
+})
+
+test('checkout: full purchase to a confirmed order that survives reload', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'uses the desktop header')
+  await page.goto('/login')
+  await page.getByLabel('E-mail').fill('ada@greenmint.test')
+  await page.locator('#auth-password').fill('senha123')
+  await page.getByRole('button', { name: 'Entrar' }).click()
+  await expect(page.getByRole('button', { name: /Ada/ })).toBeVisible()
+
+  await page.goto('/nft/nft_5')
+  await page.getByRole('radio', { name: 'ABERTA' }).click()
+  await page.getByRole('button', { name: 'COMPRAR' }).click()
+  await expect(page.getByText('Adicionado ao carrinho')).toBeVisible()
+
+  await page.goto('/pagamento')
+  await page.getByRole('combobox').first().selectOption({ index: 1 }) // rede
+  await page.getByRole('combobox').nth(1).selectOption({ index: 1 }) // carteira
+  await page.getByRole('button', { name: 'MetaMask' }).click()
+  await expect(page.getByRole('button', { name: 'Desconectar' })).toBeVisible()
+
+  await page.getByRole('button', { name: 'Confirmar compra' }).click()
+  await expect(page.getByText(/agora estão na sua carteira/i)).toBeVisible({ timeout: 15000 })
+  await expect(page).toHaveURL(/\/pedido\/order_/)
+
+  // reload the confirmation URL -> same order, still confirmed (no duplicate)
+  const url = page.url()
+  await page.reload()
+  await expect(page).toHaveURL(url)
+  await expect(page.getByText(/agora estão na sua carteira/i)).toBeVisible()
+})
+
 test('NFT detail: direct access, add to cart, missing NFT', async ({ page }) => {
   // direct access to a detail URL works (SPA + loader)
   await page.goto('/nft/nft_3')
