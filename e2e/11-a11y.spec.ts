@@ -6,7 +6,11 @@ import { resetState } from './support/app'
 
 test.beforeEach(({ page }) => resetState(page))
 
-test('the auth dialog keeps focus inside and closes on Escape', async ({ page }) => {
+test('the auth dialog keeps focus inside and closes on Escape', async ({ page }, testInfo) => {
+  // Mobile Login/Cadastro is a dedicated full-screen page in the Figma mobile
+  // frames (no dialog, no backdrop, no Escape-to-close) — only the desktop
+  // modal has dialog/focus-trap semantics to verify.
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'desktop modal only')
   await page.goto('/login')
   const dialog = page.getByRole('dialog')
   await expect(dialog).toBeVisible()

@@ -4,6 +4,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { Breadcrumb } from '@/components/Breadcrumb'
 import { cartItemCount, cartQuery } from '@/features/cart/api'
 import { CartTable } from '@/features/cart/CartTable'
+import { RecommendedProducts } from '@/features/cart/RecommendedProducts'
 import { WalletSummary } from '@/features/cart/WalletSummary'
 import { useAuth } from '@/features/auth/useAuth'
 
@@ -58,6 +59,8 @@ function CartPage() {
           <WalletSummary cart={cart} />
         </div>
       )}
+
+      {cart && <RecommendedProducts cart={cart} />}
     </div>
   )
 }

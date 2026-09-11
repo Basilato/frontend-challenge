@@ -2,7 +2,7 @@ import { fallback } from '@tanstack/zod-adapter'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { z } from 'zod'
 
-import { AuthModal } from '@/features/auth/AuthModal'
+import { AuthScreen } from '@/features/auth/AuthModal'
 import { sessionQuery } from '@/features/auth/api'
 
 const searchSchema = z.object({
@@ -20,5 +20,5 @@ export const Route = createFileRoute('/cadastro')({
 
 function CadastroRoute() {
   const { redirect: to } = Route.useSearch()
-  return <AuthModal mode="register" redirect={to} />
+  return <AuthScreen mode="register" redirect={to} />
 }

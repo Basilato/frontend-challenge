@@ -26,7 +26,7 @@ export function AccountLayout({ title, children }: { title: string; children: Re
               key={to}
               to={to}
               activeOptions={{ includeSearch: false }}
-              className="flex items-center gap-3 border-l-[6px] border-transparent px-3 py-3 text-[15px] text-text-accent transition-colors hover:bg-surface-dark [&.active]:border-primary [&.active]:bg-surface-dark [&.active]:font-medium"
+              className="flex items-center gap-3 border-l-[6px] border-transparent px-3 py-3 text-[15px] text-text-accent transition-colors hover:bg-surface-dark [&.active]:border-primary"
             >
               <Icon className="size-[18px]" />
               {label}
@@ -44,7 +44,7 @@ export function AccountLayout({ title, children }: { title: string; children: Re
               },
             })
           }
-          className="flex w-full items-center gap-3 px-3 py-3 text-[15px] font-bold text-text-accent hover:bg-surface-dark"
+          className="flex w-full items-center gap-2 px-3 py-3 text-[15px] font-bold text-text-accent hover:bg-surface-dark"
         >
           <LogOut className="size-5" />
           Sair

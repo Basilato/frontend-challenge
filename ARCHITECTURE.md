@@ -255,6 +255,72 @@ namespaces, acks or binary.
   the source. The shared account-sidebar heading also read "Minha conta";
   Figma's literal (identical on both Perfil and Carteiras) label is
   "Meu perfil" — corrected.
+- **Mobile Login/Cadastro are a dedicated full-screen page, not a shrunk
+  modal** (fidelity pass, session 2026-09-11): `get_metadata` on the Figma
+  `Mobile / Login` (`16:1022`) and `Mobile / Cadastro` (`16:1228`) frames
+  showed a completely different composition from desktop — no dialog, no
+  dimmed backdrop, no tabs: a centered 32px `KURIO` wordmark, a plain title
+  (`Entrar` / `Criar perfil de colecionador`), the form, a 60px CTA (`Entrar`
+  / **`Criar perfil`** — not `Criar conta`, mobile-only copy), a "Mobile
+  Social Block" (Google/Facebook), and a single switch-mode text line
+  (`Novo na Kurio? Crie uma conta` / `Já tem uma conta? Entre`) — no search
+  pill or bottom tab bar either. The previous implementation reused the exact
+  desktop `AuthModal` dialog at every viewport. Rebuilt as two layouts behind
+  one `useAuthForm` hook (`src/features/auth/AuthModal.tsx`): the desktop
+  `Dialog`-based modal, and a plain `MobileAuthScreen` page. `AuthScreen`
+  picks between them with a real `matchMedia('(min-width: 768px)')` check —
+  **not** a CSS breakpoint — because the desktop version is a Radix dialog:
+  mounting it `hidden` on mobile still leaves it logically `open`, and Radix
+  makes the rest of the page inert while a dialog is open, which silently
+  swallowed every tap on the mobile screen underneath it (`<html>` intercepts
+  pointer events) until this was caught by testing the mobile flow
+  end-to-end, not just screenshotting it. `RootLayout` now also skips
+  `MobileTopBar`/`MobileTabBar` on `/login` and `/cadastro` (mobile only —
+  desktop keeps Header/Footer, matching the Figma frame's dimmed Home-page
+  backdrop). The added **"Confirmar senha"** field on Cadastro (present in
+  the Figma frame's `Form`, absent from the old schema/UI entirely) is real,
+  not decorative — client-validated against the password field, not sent to
+  `POST /auth/register`.
+- **Login/Cadastro modal tab styling** (same pass): the "Entrar | Criar
+  conta" tabs were `text-xl` (24px, this project's heading size) with only
+  the active tab bold; `get_design_context` on the Figma tab node gives both
+  tabs `20px`/`font-medium` (500), differing only by color (active =
+  `text-accent`, inactive = **`text-fg`**, not the dimmer `text-secondary`
+  the old code used) — corrected, along with the tab gap (12px → Figma's
+  8px) and the header-to-subtitle gap (24px → Figma's 40px). Separately, the
+  "Continuar com Google/Facebook" buttons rendered with no icon at all
+  (`{provider}` text only) despite Figma exporting real brand marks —
+  reconstructed as `GoogleIcon`/`FacebookMarkIcon` in `components/icons.tsx`
+  from the exported vector paths (Google's is a stylized multi-color mark in
+  this design, not the literal "G" logotype — reproduced as exported, not
+  swapped for the generic logo).
+- **Footer shown on every route, not just the Figma frames that have one**
+  (same pass): `RootLayout` rendered the global `Footer` unconditionally.
+  Checking `get_metadata` on all 9 desktop frames found a `Footer` instance
+  on Início, Detalhe, Carrinho, Pagamento and Confirmação, but **not** on
+  Perfil or Carteiras (both end right after their form, ~300px of blank
+  background before the 1080px frame boundary) — `RootLayout` now hides it
+  on those two routes only.
+- **Carrinho was missing its "Colecionadores também viram" section**: the
+  Figma `Desktop / Carrinho` frame has a 5-card recommendation row between
+  the cart body and the Footer (`Related Products`, same component pattern
+  as the NFT detail page's "Mais desta coleção") that was never built —
+  added as `src/features/cart/RecommendedProducts.tsx`, filtering out NFTs
+  already in the cart rather than filtering by collection (there is no
+  single "current item" on a multi-item cart to key a collection off of).
+  While auditing that section, the NFT detail page's own equivalent
+  (`RelatedProducts.tsx`) turned out to render 4 cards in a `grid-cols-4`
+  when Figma's row holds 5 (`Frame 204` → 5 `Product Card` children) —
+  widened to `lg:grid-cols-5` with `pageSize: 6`/`slice(0, 5)` so a real
+  5-item collection actually fills the row.
+- **Account sidebar active-state had two embellishments Figma doesn't have**:
+  `get_design_context` on the Perfil/Carteiras sidebar's active row
+  (`Frame 459`) shows only a `border-l-[6px]` color change between active
+  and inactive — same text color (`text-accent`) and same weight (regular)
+  either way. The implementation additionally swapped in `bg-surface-dark`
+  and `font-medium` on the active item — removed for fidelity (the border
+  alone still satisfies the "not by color alone" a11y rule, since it's a
+  shape change, not a hue change).
 - **Border-color contrast**: `--color-border` (#3f2319) and
   `--color-border-soft` (#55321f) — both taken directly from the Figma
   primitives — measure ~1.3–1.7:1 against `--color-ink`, short of the 3:1 SC

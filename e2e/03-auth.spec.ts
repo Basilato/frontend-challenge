@@ -9,9 +9,10 @@ test.beforeEach(({}, testInfo) => test.skip(testInfo.project.name !== 'chromium-
 
 test('register conflict is a field error; a valid login lands and persists', async ({ page }) => {
   await page.goto('/cadastro')
-  await page.getByLabel('Nome').fill('Duplicada')
+  await page.getByLabel('Nome de usuário').fill('Duplicada')
   await page.getByLabel('E-mail').fill('ada@greenmint.test')
-  await page.locator('#auth-password').fill('senha123')
+  await page.locator('#auth-password-register').fill('senha123')
+  await page.getByLabel('Confirmar senha').fill('senha123')
   await page.getByRole('button', { name: 'Criar conta' }).click()
   await expect(page.getByRole('alert')).toContainText(/já cadastrado/i)
 
