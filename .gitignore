@@ -34,7 +34,8 @@ dist-ssr
 /e2e/.cache
 /lighthouse/reports
 
-# Markdown working docs — kept out of the repo by request.
-# The deliverable README.md and ARCHITECTURE.md must be re-included when written:
-#   git add -f README.md ARCHITECTURE.md
+# Markdown working docs stay out of the repo by request — except the two
+# deliverable docs, which are tracked.
 *.md
+!/README.md
+!/ARCHITECTURE.md
