@@ -2,6 +2,7 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { ChevronDown } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
 import { CartIcon, LogoutIcon, SearchIcon } from '@/components/icons'
@@ -50,13 +51,7 @@ export function Header() {
           </nav>
 
           <div className="flex items-center gap-7">
-            <button
-              type="button"
-              aria-label="Buscar"
-              className="text-fg transition-colors hover:text-text-accent"
-            >
-              <SearchIcon className="size-5" />
-            </button>
+            <HeaderSearch />
 
             <Link
               to="/carrinho"
@@ -131,5 +126,68 @@ export function Header() {
         <div className="h-px w-full bg-primary/40" />
       </div>
     </header>
+  )
+}
+
+/** Expands the header icon into a real search field, submitting to the catalog's `q` param. */
+function HeaderSearch() {
+  const navigate = useNavigate()
+  const [open, setOpen] = useState(false)
+  const [term, setTerm] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (open) inputRef.current?.focus()
+  }, [open])
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        aria-label="Buscar"
+        aria-expanded={false}
+        onClick={() => setOpen(true)}
+        className="text-fg transition-colors hover:text-text-accent"
+      >
+        <SearchIcon className="size-5" />
+      </button>
+    )
+  }
+
+  return (
+    <form
+      role="search"
+      aria-expanded={true}
+      onSubmit={(e) => {
+        e.preventDefault()
+        navigate({ to: '/', search: (prev) => ({ ...prev, q: term, page: 1 }) })
+        setOpen(false)
+        setTerm('')
+      }}
+      className="flex h-9 items-center gap-2 rounded-full border border-border bg-surface-card px-3"
+    >
+      <SearchIcon className="size-4 shrink-0 text-text-secondary" aria-hidden="true" />
+      <label htmlFor="header-search" className="sr-only">
+        Buscar NFTs
+      </label>
+      <input
+        id="header-search"
+        ref={inputRef}
+        type="search"
+        value={term}
+        onChange={(e) => setTerm(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') {
+            setOpen(false)
+            setTerm('')
+          }
+        }}
+        onBlur={() => {
+          if (!term) setOpen(false)
+        }}
+        placeholder="Buscar NFTs"
+        className="w-40 bg-transparent text-sm text-fg placeholder:text-text-secondary focus:outline-none"
+      />
+    </form>
   )
 }

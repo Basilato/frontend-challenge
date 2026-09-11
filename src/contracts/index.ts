@@ -64,6 +64,8 @@ export interface CatalogParams {
   sort?: SortKey
   page?: number
   pageSize?: number
+  /** Restrict the listing to specific ids (used by the favorites page). */
+  ids?: string[]
 }
 
 export interface Paginated<T> {

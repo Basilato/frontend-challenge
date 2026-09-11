@@ -32,7 +32,9 @@ dist-ssr
 /test-results
 /blob-report
 /e2e/.cache
-/lighthouse/reports
+
+# lighthouse/reports/ is tracked on purpose — §10/§12 of the challenge require
+# shipping the HTML/JSON audit artifacts, not just the runner script.
 
 # Markdown working docs stay out of the repo by request — except the two
 # deliverable docs, which are tracked.

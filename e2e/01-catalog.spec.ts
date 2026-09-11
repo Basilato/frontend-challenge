@@ -48,6 +48,16 @@ test('catalog state survives reload and is restored by history', async ({ page }
   await expect(page.getByRole('tab', { name: 'Em alta' })).toHaveAttribute('aria-selected', 'true')
 })
 
+test('header search expands, submits a query and resets pagination', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'desktop header icon')
+  await page.goto('/?page=2')
+  await page.getByRole('button', { name: 'Buscar' }).click()
+  await page.getByLabel('Buscar NFTs').fill('Aurora')
+  await page.getByLabel('Buscar NFTs').press('Enter')
+  await expect(page).toHaveURL(/q=Aurora/)
+  await expect(page).toHaveURL(/page=1/)
+})
+
 test('empty result set is handled', async ({ page }) => {
   await resetState(page, 'empty-catalog')
   await page.goto('/')

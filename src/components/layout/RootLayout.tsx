@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 
 import { Toaster } from '@/components/ui/toaster'
+import { useSessionExpiryRedirect } from '@/features/auth/useAuth'
 
 import { Footer } from './Footer'
 import { Header } from './Header'
@@ -8,6 +9,8 @@ import { MobileTabBar } from './MobileTabBar'
 import { MobileTopBar } from './MobileTopBar'
 
 export function RootLayout({ children }: { children: ReactNode }) {
+  useSessionExpiryRedirect()
+
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
       <a

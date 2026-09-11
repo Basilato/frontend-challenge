@@ -204,24 +204,32 @@ namespaces, acks or binary.
 
 `pnpm audit:lighthouse` (`lighthouse/run.mjs`) runs 3 measurements per page ×
 profile against the production build (`vite build && vite preview`) and reports
-the median of each category. Início = `/`, Detalhe = `/nft/nft_1`.
+the median of each category. Início = `/`, Detalhe = `/nft/nft_1`. Raw HTML/JSON
+for every run are committed under `lighthouse/reports/` (24 files — 2 pages ×
+2 profiles × 3 runs, `.report.html` + `.report.json` each).
+
+**Tooling and environment for the committed run:** Lighthouse 13.4.1, Node
+v24.13.0, Windows 10, HeadlessChrome/152.0.0.0, `throttlingMethod: simulate`.
+Mobile profile: RTT 150 ms, ~1.6 Mbps throughput, 4× CPU slowdown (Lighthouse's
+default "Moto G Power"-class mobile preset). Desktop profile: RTT 40 ms,
+~10 Mbps throughput, no CPU slowdown. Audited 2026-09-11.
 
 | Page · profile | Performance | Accessibility | Best Practices | SEO |
 | --- | --- | --- | --- | --- |
 | Início · mobile | 81 | 100 | 100 | 100 |
 | Início · desktop | 99 | 99 | 100 | 100 |
-| Detalhe · mobile | 82 | 100 | 100 | 100 |
+| Detalhe · mobile | 81 | 100 | 100 | 100 |
 | Detalhe · desktop | 99 | 100 | 100 | 100 |
 
 Targets: Performance ≥90, Accessibility ≥95, Best Practices ≥95, SEO ≥90.
 **Accessibility, Best Practices and SEO clear their targets on every page and
 profile (desktop and mobile). Performance clears its target on desktop (99) but
-falls short on mobile (81–82)** — median Core Web Vitals for the mobile runs:
+falls short on mobile (81)** — median Core Web Vitals for the mobile runs:
 
 | Page (mobile) | FCP | LCP | TBT | CLS |
 | --- | --- | --- | --- | --- |
-| Início | 3.1 s | 4.0 s | 64 ms | 0 |
-| Detalhe | 3.0 s | 4.0 s | 43 ms | 0 |
+| Início | 3.1 s | 4.0 s | 60 ms | 0 |
+| Detalhe | 3.1 s | 4.0 s | 80 ms | 0 |
 
 TBT and CLS are effectively perfect on both pages — the gap is entirely FCP/LCP
 (the two most heavily-weighted metrics), and the root cause is structural

@@ -27,6 +27,28 @@ test('rejected payment keeps the items and offers to go back to the cart', async
   await expect(page.getByText(/continuam no carrinho/i)).toBeVisible()
 })
 
+test('session expiring mid-checkout redirects to login and returns to /pagamento', async ({
+  page,
+}) => {
+  await resetState(page)
+  await login(page)
+  await addOpenEditionToCart(page, 'nft_7')
+  await fillCheckout(page)
+  await expect(page.getByRole('button', { name: 'Desconectar' })).toBeVisible()
+
+  // wipe the server-side session while the checkout form is filled in
+  await page.evaluate(() => window.__mock.resetDb())
+  await page.getByRole('button', { name: 'Confirmar compra' }).click()
+
+  await expect(page).toHaveURL(/\/login\?redirect=%2Fpagamento/, { timeout: 15_000 })
+
+  // logging back in returns the collector straight to checkout to resume
+  await page.getByLabel('E-mail').fill('ada@greenmint.test')
+  await page.locator('#auth-password').fill('senha123')
+  await page.getByRole('button', { name: 'Entrar' }).click()
+  await expect(page).toHaveURL(/\/pagamento/)
+})
+
 test('repeated confirm clicks and a timeout recover the same order (idempotency)', async ({
   page,
 }) => {

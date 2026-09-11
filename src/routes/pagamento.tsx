@@ -160,6 +160,12 @@ function PaymentPage() {
               setStaleWarning(true)
               return
             }
+            if (error instanceof ApiError && error.kind === 'unauthorized') {
+              // useAuth's onUnauthorized handler redirects to /login?redirect=/pagamento;
+              // this toast just explains why the checkout was interrupted.
+              toast.error('Sua sessão expirou. Faça login novamente para concluir a compra.')
+              return
+            }
             toast.error(
               error instanceof ApiError ? error.message : 'Não foi possível concluir a compra.',
             )

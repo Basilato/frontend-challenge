@@ -29,6 +29,7 @@ interface ParsedFilters {
   priceMin: number | null
   priceMax: number | null
   tab: CatalogTab
+  ids: string[]
 }
 
 function parseFilters(url: URL): ParsedFilters {
@@ -39,6 +40,7 @@ function parseFilters(url: URL): ParsedFilters {
     priceMin: numOrNull(url.searchParams.get('priceMinEth')),
     priceMax: numOrNull(url.searchParams.get('priceMaxEth')),
     tab: (url.searchParams.get('tab') as CatalogTab) || 'all',
+    ids: url.searchParams.getAll('ids'),
   }
 }
 
@@ -48,6 +50,7 @@ const numOrNull = (v: string | null) => (v == null || v === '' ? null : Number(v
 function filterNfts(rows: NftDetail[], f: ParsedFilters, skip?: 'collections' | 'networks') {
   const now = Date.now()
   return rows.filter((n) => {
+    if (f.ids.length && !f.ids.includes(n.id)) return false
     if (f.q && !`${n.name} ${n.collection} ${n.creator}`.toLowerCase().includes(f.q)) return false
     if (skip !== 'collections' && f.collections.length && !f.collections.includes(n.collection)) {
       return false
