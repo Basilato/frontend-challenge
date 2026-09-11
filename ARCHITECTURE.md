@@ -194,11 +194,29 @@ namespaces, acks or binary.
 - **Mobile navigation**: the Figma mobile screen leads with a search bar + a
   bottom tab bar (no logo/hamburger) — implemented as designed. There is no
   desktop-style user menu on mobile; account is reached via the Conta tab.
-- **Carteiras screen**: built from the shared form patterns + the frame's field
-  metadata — the Figma MCP hit the Starter-plan rate limit before a dedicated
-  `get_design_context` call. Visuals to be reconciled.
+- **Carteiras screen**: reconciled against the real frame (`Desktop /
+  Carteiras`, node `9:1670`) after an earlier Starter-plan rate-limit blocked
+  it. Composition, labels and the primary/secondary sections match. Two
+  intentional deviations: (1) the Figma frame includes fields with no
+  counterpart in this brief's `Wallet` contract (`Nome do perfil`, `Código de
+  indicação`, `Nome ENS`, a duplicate `E-mail`) — template noise, not
+  implemented, same reasoning as the dropped decorative fields above; (2)
+  network selection is a multi-select pill group, not the frame's single
+  `<select>`, because `Wallet.networks` is an array in the actual contract —
+  a wallet legitimately supports more than one network.
 - **Socket transport** is pinned to `websocket` (the mock has no HTTP polling
   fallback). Explorer / transaction references are simulated.
+- **Border-color contrast**: `--color-border` (#3f2319) and
+  `--color-border-soft` (#55321f) — both taken directly from the Figma
+  primitives — measure ~1.3–1.7:1 against `--color-ink`, short of the 3:1 SC
+  1.4.11 (WCAG 2.1 AA, non-text contrast) target for input/card boundaries.
+  Raised and left as-is by product decision: every bordered field still has a
+  visible label above it and a high-contrast `:focus-visible` ring (2px solid
+  `--color-primary`, ~6.9:1) on keyboard focus, and the brand's border color is
+  a deliberate part of the Figma identity — fidelity was chosen over
+  brightening it. All text/background pairs in the palette (`fg`,
+  `text-secondary`, `text-accent` on `ink`/`surface-card`/`surface-dark`) clear
+  AA at ≥6.7:1.
 
 ## 9. Lighthouse audit
 
