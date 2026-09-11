@@ -1,8 +1,21 @@
 /**
  * Mocks are activated by configuration and ship in the demo build (CLAUDE.md).
  * Enabled unless VITE_ENABLE_MOCKS === 'false'.
+ *
+ * Memoized: `main.tsx` kicks this off in the background without blocking the
+ * initial render (so first paint isn't gated behind a service-worker round
+ * trip), and `lib/http.ts`'s request interceptor awaits the same promise
+ * before letting any request leave — calling it more than once just returns
+ * the in-flight/settled promise instead of re-registering the worker.
  */
-export async function enableMocking(): Promise<void> {
+let started: Promise<void> | undefined
+
+export function enableMocking(): Promise<void> {
+  if (!started) started = doEnableMocking()
+  return started
+}
+
+async function doEnableMocking(): Promise<void> {
   if (import.meta.env.VITE_ENABLE_MOCKS === 'false') return
 
   const { worker } = await import('./browser')

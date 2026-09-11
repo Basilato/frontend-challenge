@@ -1,5 +1,7 @@
 import axios, { AxiosError, type AxiosInstance } from 'axios'
 
+import { enableMocking } from '@/mocks/enable'
+
 /**
  * Single Axios instance. Every REST call goes through here (CLAUDE.md).
  * MSW intercepts at the network layer, so there is no mock branch in this file.
@@ -97,7 +99,12 @@ export function getSessionToken(): string | null {
   }
 }
 
-http.interceptors.request.use((config) => {
+http.interceptors.request.use(async (config) => {
+  // Main.tsx no longer waits for the mock service worker before mounting (so
+  // first paint isn't gated behind that round trip) — instead every actual
+  // request waits here. Resolves immediately once mocking is ready (or right
+  // away if mocks are disabled), so this is a no-op in the steady state.
+  await enableMocking()
   const token = getSessionToken()
   if (token) config.headers.set('Authorization', `Bearer ${token}`)
   return config

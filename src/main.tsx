@@ -15,14 +15,18 @@ import './styles/app.css'
 const queryClient = createQueryClient()
 const router = createAppRouter(queryClient)
 
-enableMocking().then(() => {
-  createRoot(document.getElementById('root')!).render(
-    <StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <RealtimeProvider>
-          <RouterProvider router={router} />
-        </RealtimeProvider>
-      </QueryClientProvider>
-    </StrictMode>,
-  )
-})
+// Kick off mock registration in the background — first paint doesn't wait on
+// it. `lib/http.ts`'s request interceptor awaits this same (memoized) promise
+// before any request leaves, so data still only ever reaches mocked handlers;
+// this just decouples FCP from the service-worker round trip.
+enableMocking()
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <RealtimeProvider>
+        <RouterProvider router={router} />
+      </RealtimeProvider>
+    </QueryClientProvider>
+  </StrictMode>,
+)

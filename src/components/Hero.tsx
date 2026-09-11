@@ -41,6 +41,12 @@ export function Hero() {
           alt="Ilustração de um macaco usando óculos escuros e jaqueta universitária verde — obra em destaque da coleção."
           width={450}
           height={450}
+          // This is the page's LCP element (only Hero image above the fold) —
+          // hint the browser to fetch it ahead of lower-priority requests. No
+          // static <link rel=preload> in index.html: that's shared by every
+          // route, and this image isn't used outside Início, so it would just
+          // cost the other audited page (Detalhe) bandwidth for nothing.
+          fetchPriority="high"
           className="aspect-square w-full max-w-[450px] rounded-[24px] object-cover md:h-[450px] md:w-[450px]"
         />
       </div>

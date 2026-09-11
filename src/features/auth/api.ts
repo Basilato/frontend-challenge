@@ -1,7 +1,7 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
 
 import type { LoginRequest, RegisterRequest, Session } from '@/contracts'
-import { http, setSessionToken } from '@/lib/http'
+import { getSessionToken, http, setSessionToken } from '@/lib/http'
 
 type SessionResponse = Session & { token: string }
 
@@ -12,6 +12,9 @@ export const authKeys = {
 export const sessionQuery = queryOptions({
   queryKey: authKeys.session,
   queryFn: async ({ signal }) => {
+    // Skip the round-trip entirely when we already know there's no token —
+    // avoids a guaranteed 401 (and its console noise) on every guest page load.
+    if (!getSessionToken()) return null
     try {
       const { data } = await http.get<Session>('/auth/session', { signal })
       return data

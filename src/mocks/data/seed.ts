@@ -59,11 +59,15 @@ export function buildNfts(count = 24): NftDetail[] {
         'Um colecionável digital finalizado à mão da coleção Kurio Editions, verificado na Ethereum, com arte desbloqueável e acesso para colecionadores.',
       longDescription:
         `${name} é uma obra digital 1/50 finalizada à mão da coleção Kurio Editions. Cada atributo fica armazenado nos metadados do token e verificado na rede. A obra explora identidade, movimento e luz em um mundo digital sem fronteiras.\n\nA propriedade inclui a arte em alta resolução, lançamentos exclusivos para colecionadores e um registro permanente de procedência registrada na rede.`,
+      // 640px comfortably covers the ~404px display box at 2x DPR — the
+      // detail page's gallery image is the LCP element there, and at 900px
+      // it was ~2x the bytes this display size ever needed (Lighthouse
+      // mobile audit).
       gallery: [
-        img(`${i + 1}`, 900),
-        img(`${i + 1}-b`, 900),
-        img(`${i + 1}-c`, 900),
-        img(`${i + 1}-d`, 900),
+        img(`${i + 1}`, 640),
+        img(`${i + 1}-b`, 640),
+        img(`${i + 1}-c`, 640),
+        img(`${i + 1}-d`, 640),
       ],
       editions: [
         { id: `nft_${i + 1}_ed_std`, label: '1/1', priceEth: price, available: i % 7 === 0 ? 0 : 1 },

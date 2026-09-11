@@ -46,6 +46,7 @@ export function NftGallery({
           alt={nft.name}
           width={404}
           height={404}
+          fetchPriority="high"
           className="aspect-square w-full rounded-[24px] object-cover"
         />
         <a

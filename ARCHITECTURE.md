@@ -199,3 +199,63 @@ namespaces, acks or binary.
   `get_design_context` call. Visuals to be reconciled.
 - **Socket transport** is pinned to `websocket` (the mock has no HTTP polling
   fallback). Explorer / transaction references are simulated.
+
+## 9. Lighthouse audit
+
+`pnpm audit:lighthouse` (`lighthouse/run.mjs`) runs 3 measurements per page ×
+profile against the production build (`vite build && vite preview`) and reports
+the median of each category. Início = `/`, Detalhe = `/nft/nft_1`.
+
+| Page · profile | Performance | Accessibility | Best Practices | SEO |
+| --- | --- | --- | --- | --- |
+| Início · mobile | 81 | 100 | 100 | 100 |
+| Início · desktop | 99 | 99 | 100 | 100 |
+| Detalhe · mobile | 82 | 100 | 100 | 100 |
+| Detalhe · desktop | 99 | 100 | 100 | 100 |
+
+Targets: Performance ≥90, Accessibility ≥95, Best Practices ≥95, SEO ≥90.
+**Accessibility, Best Practices and SEO clear their targets on every page and
+profile (desktop and mobile). Performance clears its target on desktop (99) but
+falls short on mobile (81–82)** — median Core Web Vitals for the mobile runs:
+
+| Page (mobile) | FCP | LCP | TBT | CLS |
+| --- | --- | --- | --- | --- |
+| Início | 3.1 s | 4.0 s | 64 ms | 0 |
+| Detalhe | 3.0 s | 4.0 s | 43 ms | 0 |
+
+TBT and CLS are effectively perfect on both pages — the gap is entirely FCP/LCP
+(the two most heavily-weighted metrics), and the root cause is structural
+rather than a specific unoptimized resource:
+
+- This is a fully client-rendered SPA (no SSR/SSG), and the brief's mock-only
+  architecture (rule 1) means the interception layer itself — MSW's browser
+  worker plus TanStack Router/Query, Axios and a real `socket.io-client` —
+  has to download, parse and execute before the first pixel paints. That's
+  roughly 320 KB of JS (~160 KB gzip for the app bundle, ~160 KB gzip for
+  `msw/browser`) on the critical path. Under Lighthouse's mobile profile (4×
+  CPU throttling, throttled network), that JS cost dominates FCP/LCP; a real
+  deployment wouldn't ship the mock layer at all (`VITE_ENABLE_MOCKS=false`
+  against a real backend), which this audit — correctly, per the brief — does
+  not exercise.
+- Mounting no longer waits on the mock service worker: `enableMocking()` is
+  kicked off in the background from `main.tsx`, and only the Axios request
+  interceptor (`lib/http.ts`) awaits it before a request leaves — first paint
+  is decoupled from that round trip. This and the fixes below measurably
+  cleaned up Best Practices/SEO (100 across the board) but moved Performance
+  by less than a point: the JS parse/execute cost, not the SW handshake, is
+  the actual floor.
+- Fixed along the way: the guest-mode `/auth/session` probe (guaranteed 401 on
+  every anonymous load) no longer fires at all when there's no token, which
+  also cleared a console-error Best Practices deduction; added `robots.txt`;
+  the Detalhe page's gallery images (the page's LCP element) were requested at
+  900px for a ~404px display box — resized to 640px; both LCP images now hint
+  `fetchpriority="high"` (no static `<link rel=preload>` in `index.html`: it's
+  shared by every route, so preloading Início's hero art there would cost
+  Detalhe unused bytes for nothing, and vice versa).
+- Not pursued: eliminating the mock/realtime layer from the critical path
+  further would mean either SSR (out of scope — the brief specifies a Vite
+  SPA) or deferring data-dependent rendering behind a non-mock-gated shell,
+  which risks masking real request/response state behind a synthetic loading
+  frame. Given the ceiling is the mandated client-side mocking architecture
+  itself rather than an overlooked asset, further chase of the last ~8 points
+  was judged not worth that risk.
