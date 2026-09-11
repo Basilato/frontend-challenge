@@ -71,7 +71,7 @@ export function Header() {
                 <DropdownMenu.Trigger asChild>
                   <button
                     type="button"
-                    className="flex items-center gap-1.5 rounded bg-secondary px-3 py-1.5 text-sm text-fg"
+                    className="flex items-center gap-1.5 rounded bg-secondary px-3 py-1.5 text-sm text-ink outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                   >
                     {user?.name.split(' ')[0]}
                     <ChevronDown className="size-3.5" />
@@ -164,7 +164,7 @@ function HeaderSearch() {
         setOpen(false)
         setTerm('')
       }}
-      className="flex h-9 items-center gap-2 rounded-full border border-border bg-surface-card px-3"
+      className="flex h-9 items-center gap-2 rounded-full border border-border bg-surface-card px-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background"
     >
       <SearchIcon className="size-4 shrink-0 text-text-secondary" aria-hidden="true" />
       <label htmlFor="header-search" className="sr-only">

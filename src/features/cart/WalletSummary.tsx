@@ -65,7 +65,7 @@ export function WalletSummary({ cart }: { cart: Cart }) {
           <label htmlFor="coupon" className="text-sm font-bold text-fg">
             Código promocional
           </label>
-          <div className="flex overflow-hidden rounded-[3px] border border-primary">
+          <div className="flex overflow-hidden rounded-[3px] border border-primary focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background">
             <input
               id="coupon"
               value={code}

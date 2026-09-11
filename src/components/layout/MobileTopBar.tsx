@@ -21,7 +21,7 @@ export function MobileTopBar() {
       }}
       className="flex items-center gap-3 px-4 pb-2 pt-4 md:hidden"
     >
-      <label className="flex h-[45px] flex-1 items-center gap-2 rounded-[10px] bg-surface-card px-3">
+      <label className="flex h-[45px] flex-1 items-center gap-2 rounded-[10px] bg-surface-card px-3 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background">
         <SearchIcon className="size-[22px] shrink-0 text-secondary" />
         <span className="sr-only">Buscar coleções</span>
         <input
