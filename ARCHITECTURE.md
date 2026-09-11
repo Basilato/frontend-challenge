@@ -206,6 +206,55 @@ namespaces, acks or binary.
   a wallet legitimately supports more than one network.
 - **Socket transport** is pinned to `websocket` (the mock has no HTTP polling
   fallback). Explorer / transaction references are simulated.
+- **Home page — Promos + Blog + full Footer** (session 2026-09-11 fidelity
+  pass): the Figma desktop frame has three sections after the catalog grid —
+  `Promos` (two CTA cards), `Blog` ("Diário da Cunhagem", 4 cards) and a full
+  `Footer` instance (feature medallions, newsletter, brand band, 4 link
+  columns) — that had never been built; the home page cut straight from the
+  grid to a 2-line copyright bar. All three are now implemented
+  (`src/components/PromoCards.tsx`, `BlogSection.tsx`,
+  `layout/Footer.tsx`) and, like the sidebar's Featured NFT Banner, are
+  **desktop-only**: the Figma *mobile* Início frame is exactly one
+  viewport tall and never scrolls into this content, so `hidden md:flex`
+  matches the source, not an arbitrary cut. The two promo cards and two of
+  the four blog cards reuse the *same* two placeholder character portraits
+  Figma itself reuses across Hero/Promos/Blog (this file's own mock assets,
+  not our NFT seed images) — the other two blog images were exported new.
+  Footer link columns only route to a destination that actually exists
+  (`Meu perfil`, `Lista de interesse` → `/favoritos`, `Carteira e segurança`
+  → `/carteiras`, each `Coleções` entry → a real collection filter); every
+  other label from the Figma template (`Minha coleção`, `Atividade`, `Central
+  de ajuda`, …) renders as plain non-interactive text instead of a link to
+  nowhere (rule 3). The 5 "Redes sociais" icons and the newsletter form are
+  decorative for the same reason — there is no real social presence or
+  mailing list behind this demo.
+- **Breadcrumb** ("Início / Mercado" / "… / Carrinho" / "… / Pagamento"):
+  Figma renders this as one plain bold text run (no per-segment link
+  styling) on the NFT detail, cart and payment frames only — not on
+  Perfil/Carteiras/Login/Cadastro, which have none. Added as
+  `src/components/Breadcrumb.tsx`; `Início` and `Mercado` are real
+  navigation (`Mercado` goes to the existing out-of-scope `/mercado`
+  placeholder — the same route the mobile tab bar's center action already
+  used), the trailing crumb (current page) is plain text. The NFT detail
+  page previously had its own ad-hoc breadcrumb showing the item's
+  collection instead of "Mercado", styled smaller and in the wrong color
+  (`text-sm text-text-secondary` vs. Figma's bold 15px foreground) — replaced
+  for consistency; the collection name is still visible in the attributes list
+  further down the same page.
+- **NFT detail "Compartilhar este NFT" icons**: were generic lucide
+  (link / mail / share) icons wired to copy-link / mailto / `navigator.share`.
+  Figma's actual icons are LinkedIn / Message / Twitter — replaced with the
+  exported glyphs (`LinkedinShareIcon` / `MessageShareIcon` /
+  `TwitterShareIcon` in `components/icons.tsx`) wired to the corresponding
+  standard public share intents (`linkedin.com/sharing/share-offsite`,
+  `mailto:`, `twitter.com/intent/tweet`).
+- **Carteiras — card borders removed**: the previous "pendências conhecidas"
+  note about each wallet sitting in its own bordered card (not in the flat
+  Figma frame) is resolved — the border/padding wrapper was dropped in favor
+  of a plain `divide-y` between the primary and secondary sections, matching
+  the source. The shared account-sidebar heading also read "Minha conta";
+  Figma's literal (identical on both Perfil and Carteiras) label is
+  "Meu perfil" — corrected.
 - **Border-color contrast**: `--color-border` (#3f2319) and
   `--color-border-soft` (#55321f) — both taken directly from the Figma
   primitives — measure ~1.3–1.7:1 against `--color-ink`, short of the 3:1 SC

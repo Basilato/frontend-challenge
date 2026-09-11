@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 
+import { Breadcrumb } from '@/components/Breadcrumb'
 import { ApiError } from '@/lib/http'
 import { nftDetailQuery } from '@/features/catalog/api'
 import { useAuth } from '@/features/auth/useAuth'
@@ -72,13 +73,7 @@ function NftDetailPage() {
 
   return (
     <div className="space-y-14">
-      <nav aria-label="Trilha" className="text-sm text-text-secondary">
-        <Link to="/" className="hover:text-fg">
-          Início
-        </Link>
-        <span className="px-2">/</span>
-        <span className="text-fg">{nft.collection}</span>
-      </nav>
+      <Breadcrumb items={[{ label: 'Início', to: '/' }, { label: 'Mercado', to: '/mercado' }]} />
 
       <div className="grid gap-10 lg:grid-cols-2">
         <NftGallery

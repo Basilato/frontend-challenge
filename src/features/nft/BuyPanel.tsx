@@ -1,9 +1,10 @@
 import { useNavigate } from '@tanstack/react-router'
-import { Heart, Link2, Mail, Minus, Plus, Share2, Star } from 'lucide-react'
+import { Heart, Minus, Plus, Star } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
 import type { NftDetail } from '@/contracts'
+import { LinkedinShareIcon, MessageShareIcon, TwitterShareIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
 import { formatEth } from '@/lib/money'
 import { cn } from '@/lib/utils'
@@ -174,40 +175,33 @@ export function BuyPanel({
         </div>
       </dl>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <span className="text-[15px] font-bold text-fg">Compartilhar este NFT:</span>
-        <button
-          type="button"
-          aria-label="Copiar link"
-          onClick={() => {
-            navigator.clipboard?.writeText(location.href)
-            toast.success('Link copiado')
-          }}
-          className="text-text-secondary transition-colors hover:text-text-accent"
+        <a
+          aria-label="Compartilhar no LinkedIn"
+          href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(location.href)}`}
+          target="_blank"
+          rel="noreferrer"
+          className="text-fg transition-colors hover:text-text-accent"
         >
-          <Link2 className="size-[18px]" />
-        </button>
+          <LinkedinShareIcon className="h-[14.375px] w-[15px]" />
+        </a>
         <a
           aria-label="Compartilhar por e-mail"
           href={`mailto:?subject=${encodeURIComponent(nft.name)}&body=${encodeURIComponent(location.href)}`}
-          className="text-text-secondary transition-colors hover:text-text-accent"
+          className="text-fg transition-colors hover:text-text-accent"
         >
-          <Mail className="size-[18px]" />
+          <MessageShareIcon className="size-[18px]" />
         </a>
-        <button
-          type="button"
-          aria-label="Compartilhar"
-          onClick={() => {
-            if (navigator.share) void navigator.share({ title: nft.name, url: location.href })
-            else {
-              navigator.clipboard?.writeText(location.href)
-              toast.success('Link copiado')
-            }
-          }}
-          className="text-text-secondary transition-colors hover:text-text-accent"
+        <a
+          aria-label="Compartilhar no X (Twitter)"
+          href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(nft.name)}&url=${encodeURIComponent(location.href)}`}
+          target="_blank"
+          rel="noreferrer"
+          className="text-fg transition-colors hover:text-text-accent"
         >
-          <Share2 className="size-[18px]" />
-        </button>
+          <TwitterShareIcon className="h-[12.191px] w-[15.966px]" />
+        </a>
       </div>
     </div>
   )

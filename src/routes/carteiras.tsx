@@ -44,14 +44,18 @@ function WalletsPage() {
       {isLoading ? (
         <p className="text-text-secondary">Carregando…</p>
       ) : (
-        <div className="space-y-10">
-          <WalletCard role="primary" title="Carteira principal" wallet={find('primary')} userId={user!.id} />
-          <WalletCard
-            role="secondary"
-            title="Carteira secundária (opcional)"
-            wallet={find('secondary')}
-            userId={user!.id}
-          />
+        <div className="divide-y divide-border">
+          <div className="pb-10">
+            <WalletCard role="primary" title="Carteira principal" wallet={find('primary')} userId={user!.id} />
+          </div>
+          <div className="pt-10">
+            <WalletCard
+              role="secondary"
+              title="Carteira secundária (opcional)"
+              wallet={find('secondary')}
+              userId={user!.id}
+            />
+          </div>
         </div>
       )}
     </AccountLayout>
@@ -104,7 +108,7 @@ function WalletCard({
   }
 
   return (
-    <form onSubmit={submit} className="space-y-5 rounded-[6px] border border-border p-5" noValidate>
+    <form onSubmit={submit} className="space-y-5" noValidate>
       <h2 className="text-[15px] font-bold text-fg">{title}</h2>
 
       <label className="flex flex-col gap-2">

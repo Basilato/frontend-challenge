@@ -1,6 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 
+import { BlogSection } from '@/components/BlogSection'
 import { Hero } from '@/components/Hero'
+import { PromoCards } from '@/components/PromoCards'
 import { CatalogToolbar } from '@/features/catalog/CatalogToolbar'
 import { FeaturedNftBanner } from '@/features/catalog/FeaturedNftBanner'
 import { FilterSidebar } from '@/features/catalog/FilterSidebar'
@@ -13,9 +15,12 @@ export const Route = createFileRoute('/')({
   validateSearch: catalogSearchSchema,
   loaderDeps: ({ search }) => search,
   loader: ({ context, deps }) => {
+    // Prefetch only — let the component render its own loading/error state.
+    // Caught (not just fired-and-forgotten) so a route change that cancels
+    // this mid-flight doesn't surface as an unhandled rejection (CancelledError).
     const params = searchToParams(deps)
-    void context.queryClient.ensureQueryData(nftListQuery(params))
-    void context.queryClient.ensureQueryData(facetsQuery(params))
+    context.queryClient.ensureQueryData(nftListQuery(params)).catch(() => {})
+    context.queryClient.ensureQueryData(facetsQuery(params)).catch(() => {})
   },
   component: CatalogPage,
 })
@@ -39,6 +44,9 @@ function CatalogPage() {
           </div>
         </div>
       </section>
+
+      <PromoCards />
+      <BlogSection />
     </div>
   )
 }

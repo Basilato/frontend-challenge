@@ -19,7 +19,7 @@ export function AccountLayout({ title, children }: { title: string; children: Re
   return (
     <div className="grid gap-7 md:grid-cols-[260px_minmax(0,1fr)]">
       <aside className="h-max rounded-[6px] bg-surface-card py-2">
-        <p className="p-3 text-lg font-bold text-fg">Minha conta</p>
+        <p className="p-3 text-lg font-bold text-fg">Meu perfil</p>
         <nav aria-label="Conta">
           {NAV.map(({ to, label, Icon }) => (
             <Link

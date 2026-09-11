@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { z } from 'zod'
 
 import type { CreateOrderRequest, Network } from '@/contracts'
+import { Breadcrumb } from '@/components/Breadcrumb'
 import { Button } from '@/components/ui/button'
 import { ApiError } from '@/lib/http'
 import { emitWhenConnected, getSocket } from '@/lib/socket'
@@ -178,9 +179,7 @@ function PaymentPage() {
 
   return (
     <div className="space-y-8">
-      <nav aria-label="Trilha" className="text-sm font-bold text-fg">
-        Início / Mercado / Pagamento
-      </nav>
+      <Breadcrumb items={[{ label: 'Início', to: '/' }, { label: 'Mercado', to: '/mercado' }, { label: 'Pagamento' }]} />
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_405px]">
         {/* Collector form */}

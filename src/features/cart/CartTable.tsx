@@ -52,7 +52,7 @@ function CartRow({ item }: { item: CartItem }) {
   }
 
   return (
-    <div className="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-3 rounded-[8px] bg-surface-card p-3 sm:grid-cols-[1fr_88px_120px_96px_32px] sm:py-2 sm:pr-2">
+    <div className="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-3 py-3 sm:grid-cols-[1fr_88px_120px_96px_32px]">
       <Link
         to="/nft/$nftId"
         params={{ nftId: item.nftId }}

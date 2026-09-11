@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 
+import { Breadcrumb } from '@/components/Breadcrumb'
 import { cartItemCount, cartQuery } from '@/features/cart/api'
 import { CartTable } from '@/features/cart/CartTable'
 import { WalletSummary } from '@/features/cart/WalletSummary'
@@ -17,12 +18,11 @@ function CartPage() {
 
   return (
     <div className="space-y-10">
-      <h1 className="text-2xl font-bold text-fg">
+      <Breadcrumb items={[{ label: 'Início', to: '/' }, { label: 'Mercado', to: '/mercado' }, { label: 'Carrinho' }]} />
+      <h1 className="sr-only">
         Carrinho de NFTs
         {cart && cart.items.length > 0 && (
-          <span className="ml-2 text-base font-normal text-text-secondary">
-            ({cartItemCount(cart)} {cartItemCount(cart) === 1 ? 'item' : 'itens'})
-          </span>
+          <span> ({cartItemCount(cart)} {cartItemCount(cart) === 1 ? 'item' : 'itens'})</span>
         )}
       </h1>
 
