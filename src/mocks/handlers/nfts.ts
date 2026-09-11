@@ -136,6 +136,9 @@ export const nftHandlers = [
   http.get(API('/nfts/:id'), async ({ params }) => {
     await applyLatency()
     if (scenario().offline) return HttpResponse.error()
+    if (shouldTransientlyFail()) {
+      return HttpResponse.json({ message: 'Serviço indisponível' }, { status: 503 })
+    }
     const nft = db.nfts.find((n) => n.id === params.id || n.slug === params.id)
     if (!nft) return HttpResponse.json({ message: 'NFT não encontrado' }, { status: 404 })
     return HttpResponse.json(nft)

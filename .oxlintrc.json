@@ -11,6 +11,12 @@
       "rules": {
         "react/only-export-components": "off"
       }
+    },
+    {
+      "files": ["e2e/**"],
+      "rules": {
+        "no-empty-pattern": "off"
+      }
     }
   ],
   "ignorePatterns": ["src/routeTree.gen.ts", "dist", "playwright-report"]

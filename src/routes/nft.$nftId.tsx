@@ -12,11 +12,12 @@ import { RelatedProducts } from '@/features/nft/RelatedProducts'
 
 export const Route = createFileRoute('/nft/$nftId')({
   loader: async ({ context, params }) => {
+    // Prefetch, but let the component render its own not-found / error state
+    // rather than bubbling to the router error boundary.
     try {
       await context.queryClient.ensureQueryData(nftDetailQuery(params.nftId))
-    } catch (error) {
-      if (error instanceof ApiError && error.kind === 'not-found') return
-      throw error
+    } catch {
+      /* handled in the component via useQuery */
     }
   },
   component: NftDetailPage,
@@ -31,7 +32,9 @@ function NftDetailPage() {
 
   if (isLoading) return <DetailSkeleton />
 
-  if ((isError && error instanceof ApiError && error.kind === 'not-found') || (!isLoading && !nft)) {
+  const notFound = isError && error instanceof ApiError && error.kind === 'not-found'
+
+  if (notFound) {
     return (
       <div className="rounded-[15px] bg-surface-card p-12 text-center">
         <h1 className="text-xl font-bold text-text-accent">NFT não encontrado</h1>

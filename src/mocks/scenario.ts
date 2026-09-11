@@ -14,6 +14,7 @@ export type ScenarioName =
   | 'order-timeout-then-recover'
   | 'payment-rejected'
   | 'wallet-connect-rejected'
+  | 'favorite-write-fails'
 
 export interface ScenarioConfig {
   name: ScenarioName
@@ -35,6 +36,8 @@ export interface ScenarioConfig {
   paymentRejected: boolean
   /** wallet connection simulation is refused */
   walletConnectRejected: boolean
+  /** favorite add/remove mutations fail with 503 */
+  favoriteWriteFails: boolean
 }
 
 const PRESETS: Record<ScenarioName, ScenarioConfig> = {
@@ -57,6 +60,7 @@ const PRESETS: Record<ScenarioName, ScenarioConfig> = {
     ...base('wallet-connect-rejected'),
     walletConnectRejected: true,
   },
+  'favorite-write-fails': { ...base('favorite-write-fails'), favoriteWriteFails: true },
 }
 
 function base(name: ScenarioName): ScenarioConfig {
@@ -72,6 +76,7 @@ function base(name: ScenarioName): ScenarioConfig {
     orderFirstAttemptTimesOut: false,
     paymentRejected: false,
     walletConnectRejected: false,
+    favoriteWriteFails: false,
   }
 }
 

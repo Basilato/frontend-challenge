@@ -7,7 +7,7 @@ import { z } from 'zod'
 import type { CreateOrderRequest, Network } from '@/contracts'
 import { Button } from '@/components/ui/button'
 import { ApiError } from '@/lib/http'
-import { getSocket } from '@/lib/socket'
+import { emitWhenConnected, getSocket } from '@/lib/socket'
 import { cn } from '@/lib/utils'
 import { sessionQuery } from '@/features/auth/api'
 import { useAuth } from '@/features/auth/useAuth'
@@ -67,12 +67,28 @@ function PaymentPage() {
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [staleWarning, setStaleWarning] = useState(false)
+  // Set when a cart item changes on the wire while the checkout is open — the
+  // next confirm click is blocked so the collector reviews the updated total.
+  const [priceChanged, setPriceChanged] = useState(false)
+  const cartNftIds = (cart?.items ?? []).map((i) => i.nftId)
   const formId = useId()
 
   // Tell the mock the checkout is open (drives the price-change scenario).
+  useEffect(() => emitWhenConnected('subscribe:checkout'), [])
+
+  // Watch the wire for changes to items in this cart.
   useEffect(() => {
-    getSocket()?.emit('subscribe:checkout')
-  }, [])
+    const socket = getSocket()
+    if (!socket) return
+    const onNft = (event: { nftId?: string }) => {
+      if (event?.nftId && cartNftIds.includes(event.nftId)) setPriceChanged(true)
+    }
+    socket.on('nft.updated', onNft)
+    return () => {
+      socket.off('nft.updated', onNft)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartNftIds.join(',')])
 
   if (cartLoading) return <p className="py-16 text-center text-text-secondary">Carregando…</p>
   if (!cart || cart.items.length === 0) {
@@ -88,7 +104,6 @@ function PaymentPage() {
 
   const submit = async () => {
     setErrors({})
-    setStaleWarning(false)
     const parsed = formSchema.safeParse(values)
     if (!parsed.success) {
       setErrors(Object.fromEntries(parsed.error.issues.map((i) => [i.path[0], i.message])))
@@ -98,6 +113,14 @@ function PaymentPage() {
       setErrors({ wallet: 'Conecte uma carteira para continuar.' })
       return
     }
+    // A price/availability change arrived while the checkout was open — force a
+    // deliberate re-confirmation against the updated summary.
+    if (priceChanged) {
+      setPriceChanged(false)
+      setStaleWarning(true)
+      return
+    }
+    setStaleWarning(false)
 
     // Revalidate the quote right before confirming (README).
     const fresh = await queryClient

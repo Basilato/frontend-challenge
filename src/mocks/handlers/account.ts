@@ -74,6 +74,9 @@ export const accountHandlers = [
     await applyLatency()
     const user = requireUser(request)
     if (!user) return unauthorized()
+    if (scenario().favoriteWriteFails) {
+      return HttpResponse.json({ message: 'Falha ao favoritar' }, { status: 503 })
+    }
     const set = new Set(db.favorites[user.id] ?? [])
     set.add(String(params.nftId))
     db.favorites[user.id] = [...set]
@@ -84,6 +87,9 @@ export const accountHandlers = [
     await applyLatency()
     const user = requireUser(request)
     if (!user) return unauthorized()
+    if (scenario().favoriteWriteFails) {
+      return HttpResponse.json({ message: 'Falha ao remover favorito' }, { status: 503 })
+    }
     db.favorites[user.id] = (db.favorites[user.id] ?? []).filter((id) => id !== String(params.nftId))
     persistDb()
     return HttpResponse.json({ nftIds: db.favorites[user.id] })

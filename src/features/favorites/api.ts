@@ -1,4 +1,5 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 
 import type { FavoritesResponse } from '@/contracts'
 import { http } from '@/lib/http'
@@ -44,6 +45,7 @@ export function useToggleFavorite() {
     },
     onError: (_e, _v, ctx) => {
       if (ctx) queryClient.setQueryData(key, ctx.prev)
+      toast.error('Não foi possível atualizar seus favoritos.')
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: key }),
   })

@@ -13,10 +13,10 @@
     "preview": "vite preview --port 4173",
     "lint": "oxlint",
     "typecheck": "tsc -b --noEmit",
-    "test:e2e": "playwright test",
-    "test:visual": "playwright test --grep @visual",
-    "test:e2e:update": "playwright test --update-snapshots",
-    "audit:lighthouse": "node ./lighthouse/run.mjs"
+    "test:e2e": "playwright test --project=chromium-desktop --project=chromium-mobile",
+    "test:visual": "playwright test --project=visual-desktop --project=visual-mobile",
+    "audit:lighthouse": "node ./lighthouse/run.mjs",
+    "test:visual:update": "playwright test --project=visual-desktop --project=visual-mobile --update-snapshots"
   },
   "dependencies": {
     "@fontsource-variable/roboto-mono": "^5.3.0",
