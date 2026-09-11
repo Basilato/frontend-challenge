@@ -36,8 +36,10 @@ export function FeaturedNftBanner({ className }: { className?: string }) {
             loading="lazy"
             className="h-[340px] w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
           />
-          <span className="mt-3 flex items-baseline justify-between">
-            <span className="truncate text-sm text-fg">{featured.name}</span>
+          <span className="mt-3 flex items-baseline justify-between gap-2">
+            <span className="min-w-0">
+              <span className="block truncate text-sm text-fg">{featured.name}</span>
+            </span>
             <span className="shrink-0 text-sm font-bold text-text-accent">
               {formatEth(featured.priceEth)}
             </span>

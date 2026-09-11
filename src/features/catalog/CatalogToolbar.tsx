@@ -23,7 +23,7 @@ export function CatalogToolbar() {
   const navigate = catalogRoute.useNavigate()
 
   return (
-    <div className="flex flex-col gap-4 border-b border-border pb-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-4 border-b border-border pb-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
       <div
         role="tablist"
         aria-label="Filtrar catálogo"
