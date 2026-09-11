@@ -14,6 +14,7 @@ export interface MockDb {
   carts: Record<string, Cart> // ownerKey (userId or guest id) -> cart
   wallets: Record<string, Wallet[]> // userId -> wallets
   orders: Record<string, Order> // orderId -> order
+  orderOwners: Record<string, string> // orderId -> userId (private, never serialized in responses)
   ordersByIdempotencyKey: Record<string, string> // key -> orderId
   idempotency: Record<string, { quoteHash: string; firstAttemptSeen: boolean }> // key -> meta
   sessions: Record<string, { userId: string; expiresAt: number }> // token -> session
@@ -29,6 +30,7 @@ function freshDb(): MockDb {
     carts: {},
     wallets: Object.fromEntries(USERS.map((u) => [u.id, walletsFor(u.id)])),
     orders: {},
+    orderOwners: {},
     ordersByIdempotencyKey: {},
     idempotency: {},
     sessions: {},

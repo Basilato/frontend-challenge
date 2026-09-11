@@ -18,8 +18,11 @@ export function connectSocket(auth: SocketAuth): Socket {
     path: '/socket.io',
     transports: ['websocket'],
     autoConnect: true,
+    reconnection: true,
     auth,
   })
+  // The mock reads identity from an event, not the handshake auth.
+  socket.on('connect', () => socket?.emit('identify', { userId: auth.userId }))
   return socket
 }
 

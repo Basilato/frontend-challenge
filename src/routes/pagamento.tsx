@@ -1,12 +1,13 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link, redirect, useNavigate } from '@tanstack/react-router'
-import { useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { z } from 'zod'
 
 import type { CreateOrderRequest, Network } from '@/contracts'
 import { Button } from '@/components/ui/button'
 import { ApiError } from '@/lib/http'
+import { getSocket } from '@/lib/socket'
 import { cn } from '@/lib/utils'
 import { sessionQuery } from '@/features/auth/api'
 import { useAuth } from '@/features/auth/useAuth'
@@ -67,6 +68,11 @@ function PaymentPage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [staleWarning, setStaleWarning] = useState(false)
   const formId = useId()
+
+  // Tell the mock the checkout is open (drives the price-change scenario).
+  useEffect(() => {
+    getSocket()?.emit('subscribe:checkout')
+  }, [])
 
   if (cartLoading) return <p className="py-16 text-center text-text-secondary">Carregando…</p>
   if (!cart || cart.items.length === 0) {

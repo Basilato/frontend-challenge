@@ -12,10 +12,22 @@ export async function enableMocking(): Promise<void> {
     quiet: true,
   })
 
-  // expose scenario + db reset for the dev panel and Playwright
-  const { setScenario, scenarioNames } = await import('./scenario')
+  const { startSocketMock } = await import('./socket')
+  startSocketMock()
+
+  const { setScenario, scenario, scenarioNames } = await import('./scenario')
   const { resetDb } = await import('./db')
+  const { emitNftUpdated, emitOrderUpdated } = await import('./socket')
+
+  // Test + dev-panel control surface for the deterministic scenarios.
   Object.assign(window, {
-    __mock: { setScenario, scenarioNames, resetDb },
+    __mock: {
+      setScenario,
+      scenario,
+      scenarioNames,
+      resetDb,
+      emitNftUpdated,
+      emitOrderUpdated,
+    },
   })
 }

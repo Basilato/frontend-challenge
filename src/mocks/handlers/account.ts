@@ -12,6 +12,7 @@ import { addEth, ethToWei, mulEth, weiToEth } from '@/lib/money'
 
 import { db, getSessionUser, persistDb } from '../db'
 import { applyLatency, scenario } from '../scenario'
+import { emitOrderUpdated } from '../socket'
 import { tokenFrom, publicUser } from './auth'
 
 const API = (path: string) => `${import.meta.env.VITE_API_URL ?? '/api'}${path}`
@@ -235,6 +236,7 @@ export const accountHandlers = [
 
     const order = createOrder(idempotencyKey, body, quote, user.id)
     db.orders[order.id] = order
+    db.orderOwners[order.id] = user.id
     db.ordersByIdempotencyKey[idempotencyKey] = order.id
     db.idempotency[idempotencyKey] = { quoteHash: body.quoteHash, firstAttemptSeen: true }
     db.carts[cartKey] = emptyCart(cartKey) // remove purchased items
@@ -251,10 +253,14 @@ export const accountHandlers = [
     await applyLatency()
     const user = requireUser(request)
     if (!user) return unauthorized()
-    const order = db.orders[String(params.id)]
-    if (!order) return HttpResponse.json({ message: 'Pedido não encontrado' }, { status: 404 })
-    settleOrder(order)
-    return HttpResponse.json(order)
+    const id = String(params.id)
+    const order = db.orders[id]
+    // Isolation: a user can only read their own orders — unknown to others.
+    if (!order || db.orderOwners[id] !== user.id) {
+      return HttpResponse.json({ message: 'Pedido não encontrado' }, { status: 404 })
+    }
+    settleOrder(id)
+    return HttpResponse.json(db.orders[id])
   }),
 
   // -- profile ----------------------------------------------------------
@@ -369,18 +375,13 @@ function createOrder(
   }
 }
 
-/** Async settlement: a pending order resolves to confirmed/rejected after a delay. */
-function settleOrder(order: Order): void {
-  if (order.status !== 'pending') return
+/**
+ * Async settlement: a pending order resolves after a delay. Routed through the
+ * socket emitter so connected clients get the `order.updated` event too.
+ */
+function settleOrder(orderId: string): void {
+  const order = db.orders[orderId]
+  if (!order || order.status !== 'pending') return
   if (Date.now() - new Date(order.createdAt).getTime() < SETTLE_MS) return
-  order.version += 1
-  if (scenario().paymentRejected) {
-    order.status = 'rejected'
-    order.rejectionReason = 'A carteira recusou a transação.'
-  } else {
-    order.status = 'confirmed'
-    order.transactionRef = `0x${Math.random().toString(16).slice(2).padEnd(40, '0').slice(0, 40)}`
-    order.explorerUrl = `https://example-explorer.test/tx/${order.transactionRef}`
-  }
-  persistDb()
+  emitOrderUpdated(orderId, scenario().paymentRejected ? 'rejected' : 'confirmed')
 }

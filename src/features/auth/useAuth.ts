@@ -3,7 +3,6 @@ import { useEffect } from 'react'
 
 import type { User } from '@/contracts'
 import { onUnauthorized } from '@/lib/http'
-import { connectSocket, disconnectSocket } from '@/lib/socket'
 
 import { authKeys, sessionQuery } from './api'
 
@@ -18,23 +17,14 @@ export function useAuth(): AuthState {
   const queryClient = useQueryClient()
 
   // Session expiry during navigation: a 401 anywhere clears the session and
-  // private caches (CLAUDE.md rule 4).
+  // private caches (CLAUDE.md rule 4). The socket is torn down by RealtimeProvider
+  // when the session goes null.
   useEffect(() => {
     return onUnauthorized(() => {
       queryClient.setQueryData(authKeys.session, null)
       queryClient.removeQueries({ predicate: (q) => isPrivateKey(q.queryKey) })
-      disconnectSocket()
     })
   }, [queryClient])
-
-  // Keep the realtime connection bound to the current identity.
-  useEffect(() => {
-    if (data?.user) {
-      connectSocket({ userId: data.user.id })
-      return () => disconnectSocket()
-    }
-    disconnectSocket()
-  }, [data?.user])
 
   return {
     user: data?.user ?? null,

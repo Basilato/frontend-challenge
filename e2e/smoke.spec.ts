@@ -123,6 +123,50 @@ test('checkout requires auth', async ({ page }) => {
   await expect(page).toHaveURL(/\/login/)
 })
 
+test('realtime: nft.updated warns about a cart item; order.updated settles the order', async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'uses the desktop header')
+  await page.goto('/login')
+  await page.getByLabel('E-mail').fill('ada@greenmint.test')
+  await page.locator('#auth-password').fill('senha123')
+  await page.getByRole('button', { name: 'Entrar' }).click()
+  await expect(page.getByRole('button', { name: /Ada/ })).toBeVisible()
+
+  await page.goto('/nft/nft_5')
+  await page.getByRole('radio', { name: 'ABERTA' }).click()
+  await page.getByRole('button', { name: 'COMPRAR' }).click()
+  await expect(page.getByText('Adicionado ao carrinho')).toBeVisible()
+
+  // an nft.updated for a cart item is delivered through socket.io-client
+  await page.evaluate(() =>
+    (window as unknown as { __mock: { emitNftUpdated(id: string, p: object): void } }).__mock.emitNftUpdated(
+      'nft_5',
+      { priceEth: '12.00' },
+    ),
+  )
+  await expect(page.getByText('Um item do seu carrinho mudou')).toBeVisible()
+
+  // place an order, then push order.updated instead of waiting for the poll
+  await page.goto('/pagamento')
+  await page.getByRole('combobox').first().selectOption({ index: 1 })
+  await page.getByRole('combobox').nth(1).selectOption({ index: 1 })
+  await page.getByRole('button', { name: 'MetaMask' }).click()
+  await expect(page.getByRole('button', { name: 'Desconectar' })).toBeVisible()
+  await page.getByRole('button', { name: 'Confirmar compra' }).click()
+  await expect(page).toHaveURL(/\/pedido\/order_/)
+  const orderId = page.url().split('/pedido/')[1]
+  await page.evaluate(
+    (id) =>
+      (window as unknown as { __mock: { emitOrderUpdated(id: string, s: string): void } }).__mock.emitOrderUpdated(
+        id,
+        'confirmed',
+      ),
+    orderId,
+  )
+  await expect(page.getByText(/agora estão na sua carteira/i)).toBeVisible()
+})
+
 test('account: profile requires auth, then edit + password + wallet validation', async ({
   page,
 }, testInfo) => {
