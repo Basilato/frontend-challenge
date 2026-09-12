@@ -1,13 +1,16 @@
 import { expect, test } from '@playwright/test'
 
-import { login, resetState } from './support/app'
+import { clickFavoriteToggle, expectFavoriteState, login, resetState } from './support/app'
 
 // Scenario 4 — favorites, including a mutation failure with state recovery.
+// The favorite control differs by layout — a "Favoritar" text button on
+// desktop, the heart icon on the hero image on mobile — so these use the
+// viewport-aware helpers rather than a hardcoded role name.
 
 test('favoriting requires auth; toggle persists for the signed-in user', async ({ page }) => {
   await resetState(page)
   await page.goto('/nft/nft_4')
-  await page.getByRole('button', { name: 'Favoritar' }).click()
+  await clickFavoriteToggle(page)
   await expect(page.getByText(/Entre para salvar favoritos/i)).toBeVisible()
 
   await login(page)
@@ -17,12 +20,12 @@ test('favoriting requires auth; toggle persists for the signed-in user', async (
     page.waitForResponse(
       (r) => r.url().includes('/favorites/nft_4') && r.request().method() === 'PUT' && r.ok(),
     ),
-    page.getByRole('button', { name: /^Favoritar$/ }).click(),
+    clickFavoriteToggle(page),
   ])
-  await expect(page.getByRole('button', { name: 'Favoritado' })).toBeVisible()
+  await expectFavoriteState(page, true)
 
   await page.goto('/nft/nft_4', { waitUntil: 'networkidle' })
-  await expect(page.getByRole('button', { name: 'Favoritado' })).toBeVisible()
+  await expectFavoriteState(page, true)
 })
 
 test('optimistic favorite rolls back when the mutation fails', async ({ page }) => {
@@ -30,10 +33,10 @@ test('optimistic favorite rolls back when the mutation fails', async ({ page }) 
   await login(page)
   await page.goto('/nft/nft_6', { waitUntil: 'networkidle' })
 
-  await page.getByRole('button', { name: /^Favoritar$/ }).click()
+  await clickFavoriteToggle(page)
   // optimistic flip, then rollback + error feedback
   await expect(page.getByText(/Não foi possível atualizar seus favoritos/i)).toBeVisible()
-  await expect(page.getByRole('button', { name: /^Favoritar$/ })).toBeVisible()
+  await expectFavoriteState(page, false)
 })
 
 test('/favoritos is a guarded route that returns here after login', async ({ page }) => {
@@ -61,7 +64,7 @@ test('favorites list shows favorited NFTs and removing one drops it from the lis
     page.waitForResponse(
       (r) => r.url().includes('/favorites/nft_4') && r.request().method() === 'PUT' && r.ok(),
     ),
-    page.getByRole('button', { name: /^Favoritar$/ }).click(),
+    clickFavoriteToggle(page),
   ])
 
   await page.goto('/favoritos', { waitUntil: 'networkidle' })

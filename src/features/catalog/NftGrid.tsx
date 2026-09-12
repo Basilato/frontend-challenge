@@ -6,12 +6,12 @@ import { cn } from '@/lib/utils'
 
 import { nftListQuery } from './api'
 import { NftCard, NftCardSkeleton } from './NftCard'
-import { catalogRoute } from './route'
+import { useCatalogNavigate, useCatalogSearch } from './route'
 import { searchToParams } from './search'
 
 export function useCatalogPagination() {
-  const search = catalogRoute.useSearch()
-  const navigate = catalogRoute.useNavigate()
+  const search = useCatalogSearch()
+  const navigate = useCatalogNavigate()
   const params = searchToParams(search)
   const { data } = useQuery(nftListQuery(params))
   return { totalPages: data?.totalPages ?? 0, page: data?.page ?? 1, navigate, data }
@@ -47,7 +47,7 @@ export function Pagination() {
 }
 
 export function NftGrid() {
-  const search = catalogRoute.useSearch()
+  const search = useCatalogSearch()
   const params = searchToParams(search)
   const { data, isLoading, isError, isFetching, isPlaceholderData, refetch } = useQuery(
     nftListQuery(params),

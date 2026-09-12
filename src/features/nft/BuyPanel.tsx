@@ -10,16 +10,16 @@ import { formatEth } from '@/lib/money'
 import { cn } from '@/lib/utils'
 import { useAddToCart } from '@/features/cart/api'
 
+import { MobileBuyBar } from './MobileBuyBar'
+
 const MAX_PER_ORDER = 10
 
 export function BuyPanel({
   nft,
-  isAuthenticated,
   isFavorite,
   onToggleFavorite,
 }: {
   nft: NftDetail
-  isAuthenticated: boolean
   isFavorite: boolean
   onToggleFavorite: () => void
 }) {
@@ -36,9 +36,25 @@ export function BuyPanel({
 
   const rounded = Math.round(nft.rating)
 
+  const buy = () => {
+    addToCart.mutate(
+      { nftId: nft.id, editionId: edition.id, quantity: clampedQty },
+      {
+        onSuccess: () =>
+          toast.success('Adicionado ao carrinho', {
+            action: { label: 'Ver carrinho', onClick: () => navigate({ to: '/carrinho' }) },
+          }),
+        onError: () => toast.error('Não foi possível adicionar ao carrinho.'),
+      },
+    )
+  }
+
   return (
-    <div className="flex flex-col gap-5">
-      <div className="space-y-3 border-b border-border pb-4">
+    <div className="relative -mt-8 flex flex-col gap-5 rounded-t-[31px] bg-surface-card px-6 pb-6 pt-8 lg:mt-0 lg:rounded-none lg:bg-transparent lg:px-0 lg:pb-0 lg:pt-0">
+      {/* Desktop header: title, price, and a 5-star row with the review
+          count spelled out. The Figma mobile frame has none of that — see
+          the compact title+rating-pill row just below, mobile-only. */}
+      <div className="hidden space-y-3 border-b border-border pb-4 lg:block">
         <h1 className="text-[28px] font-bold leading-tight text-fg">{nft.name}</h1>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-[22px] font-bold text-text-accent">{formatEth(edition.priceEth)}</p>
@@ -56,8 +72,19 @@ export function BuyPanel({
         </div>
       </div>
 
+      <div className="flex items-center justify-between gap-2 lg:hidden">
+        <h1 className="text-[20px] font-bold leading-4 text-fg">{nft.name}</h1>
+        <div className="flex shrink-0 items-center gap-1 rounded-full border border-primary px-3 py-1.5">
+          <Star className="size-3.5 fill-primary text-primary" aria-hidden="true" />
+          <span className="text-sm">
+            <span className="font-medium text-fg">{nft.rating.toFixed(1)}</span>
+            <span className="text-text-secondary">({nft.reviewCount})</span>
+          </span>
+        </div>
+      </div>
+
       <section className="space-y-3">
-        <h2 className="text-[15px] font-bold text-fg">Sobre este NFT:</h2>
+        <h2 className="hidden text-[15px] font-bold text-fg lg:block">Sobre este NFT:</h2>
         <p className="text-sm leading-6 text-text-secondary">{nft.description}</p>
       </section>
 
@@ -97,7 +124,11 @@ export function BuyPanel({
         )}
       </section>
 
-      <div className="flex flex-wrap items-center gap-4">
+      {/* Figma's mobile "Detalhes do NFT" frame moves quantity/price/buy into
+          the sticky Buy Bar (see MobileBuyBar below) and has no inline
+          Favoritar button — favoriting is the heart on the hero image. This
+          row is the desktop-only equivalent. */}
+      <div className="hidden flex-wrap items-center gap-4 lg:flex">
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -122,22 +153,7 @@ export function BuyPanel({
           </button>
         </div>
 
-        <Button
-          className="w-[130px]"
-          disabled={!canBuy || addToCart.isPending}
-          onClick={() => {
-            addToCart.mutate(
-              { nftId: nft.id, editionId: edition.id, quantity: clampedQty },
-              {
-                onSuccess: () =>
-                  toast.success('Adicionado ao carrinho', {
-                    action: { label: 'Ver carrinho', onClick: () => navigate({ to: '/carrinho' }) },
-                  }),
-                onError: () => toast.error('Não foi possível adicionar ao carrinho.'),
-              },
-            )
-          }}
-        >
+        <Button className="w-[130px]" disabled={!canBuy || addToCart.isPending} onClick={buy}>
           COMPRAR
         </Button>
 
@@ -145,20 +161,23 @@ export function BuyPanel({
           variant="outline"
           className="w-[130px] gap-2 border-primary text-text-accent"
           aria-pressed={isFavorite}
-          onClick={() => {
-            if (!isAuthenticated) {
-              toast.info('Entre para salvar favoritos.', {
-                action: { label: 'Entrar', onClick: () => navigate({ to: '/login' }) },
-              })
-              return
-            }
-            onToggleFavorite()
-          }}
+          onClick={onToggleFavorite}
         >
           <Heart className={cn('size-4', isFavorite && 'fill-current')} />
           {isFavorite ? 'Favoritado' : 'Favoritar'}
         </Button>
       </div>
+
+      <MobileBuyBar
+        priceEth={edition.priceEth}
+        qty={clampedQty}
+        minQty={1}
+        maxQty={maxQty}
+        onDecrease={() => setQty((q) => Math.max(1, q - 1))}
+        onIncrease={() => setQty((q) => Math.min(maxQty, q + 1))}
+        onBuy={buy}
+        buyDisabled={!canBuy || addToCart.isPending}
+      />
 
       <dl className="space-y-2 text-[15px] text-secondary">
         <div className="flex gap-2">

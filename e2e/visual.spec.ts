@@ -31,7 +31,7 @@ test.describe('@visual', () => {
 
   test('Detalhe do NFT', async ({ page }) => {
     await page.goto('/nft/nft_2')
-    await page.getByText(/Sobre este NFT/i).waitFor()
+    await page.getByText('Edição:').waitFor()
     await expect(page).toHaveScreenshot('detalhe.png', { ...shot, fullPage: true })
   })
 
@@ -43,7 +43,7 @@ test.describe('@visual', () => {
   })
 
   test('Pagamento', async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name === 'chromium-mobile', 'covered on desktop')
+    test.skip(testInfo.project.name.includes('mobile'), 'covered on desktop')
     await login(page)
     await addOpenEditionToCart(page, 'nft_5')
     await fillCheckout(page)

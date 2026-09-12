@@ -33,6 +33,10 @@ dist-ssr
 /blob-report
 /e2e/.cache
 
+# Visual regression baselines kept out of git by request — they still exist
+# locally for `pnpm test:visual` to compare against, just not tracked/pushed.
+/e2e/__screenshots__
+
 # lighthouse/reports/ is tracked on purpose — §10/§12 of the challenge require
 # shipping the HTML/JSON audit artifacts, not just the runner script.
 

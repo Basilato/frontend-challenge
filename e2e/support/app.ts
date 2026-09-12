@@ -94,8 +94,40 @@ export async function expectSignedIn(page: Page) {
 export async function addOpenEditionToCart(page: Page, nftId: string) {
   await page.goto(`/nft/${nftId}`)
   await page.getByRole('radio', { name: 'ABERTA' }).click()
-  await page.getByRole('button', { name: 'COMPRAR' }).click()
+  await clickBuy(page)
   await expect(page.getByText('Adicionado ao carrinho')).toBeVisible()
+}
+
+/** Click the detail page's primary buy CTA — the desktop-only inline "COMPRAR"
+ *  button, or the mobile "Comprar NFT" sticky Buy Bar that replaces it there. */
+export async function clickBuy(page: Page) {
+  await page.getByRole('button', { name: /^(COMPRAR|Comprar NFT)$/ }).click()
+}
+
+/** Click the detail page's favorite toggle — a "Favoritar"/"Favoritado" text
+ *  button on desktop, or the heart icon on the hero image on mobile (the
+ *  Figma mobile frame has no text favorite button, only that icon). */
+export async function clickFavoriteToggle(page: Page) {
+  const textButton = page.getByRole('button', { name: /^(Favoritar|Favoritado)$/ })
+  if (await textButton.isVisible().catch(() => false)) {
+    await textButton.click()
+    return
+  }
+  await page.getByRole('button', { name: /^(Adicionar aos favoritos|Remover dos favoritos)$/ }).click()
+}
+
+/** Assert the detail page's favorite toggle is in the given state, on either layout. */
+export async function expectFavoriteState(page: Page, favorited: boolean) {
+  const textButton = page.getByRole('button', { name: favorited ? 'Favoritado' : 'Favoritar' })
+  if (await textButton.isVisible().catch(() => false)) {
+    await expect(textButton).toBeVisible()
+    return
+  }
+  await expect(
+    page.getByRole('button', {
+      name: favorited ? 'Remover dos favoritos' : 'Adicionar aos favoritos',
+    }),
+  ).toBeVisible()
 }
 
 /** Fill the payment form and connect a wallet, ready to confirm. */

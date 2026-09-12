@@ -4,6 +4,8 @@ import { useState } from 'react'
 import type { NftDetail } from '@/contracts'
 import { cn } from '@/lib/utils'
 
+import { NftGalleryModal } from './NftGalleryModal'
+
 export function NftGallery({
   nft,
   isFavorite,
@@ -17,6 +19,7 @@ export function NftGallery({
 }) {
   const images = nft.gallery.length ? nft.gallery : [nft.image]
   const [active, setActive] = useState(0)
+  const [galleryOpen, setGalleryOpen] = useState(false)
   const current = images[active] ?? nft.image
 
   return (
@@ -49,15 +52,14 @@ export function NftGallery({
           fetchPriority="high"
           className="aspect-square w-full rounded-[24px] object-cover"
         />
-        <a
-          href={current}
-          target="_blank"
-          rel="noreferrer"
-          aria-label="Abrir imagem em tamanho real"
-          className="absolute right-4 top-4 flex size-[30px] items-center justify-center rounded-full bg-ink/70 text-fg backdrop-blur"
+        <button
+          type="button"
+          onClick={() => setGalleryOpen(true)}
+          aria-label={images.length > 1 ? 'Abrir galeria de imagens' : 'Ampliar imagem'}
+          className="absolute right-4 top-4 flex size-[30px] items-center justify-center rounded-full bg-ink/70 text-fg outline-none backdrop-blur focus-visible:ring-2 focus-visible:ring-ring"
         >
           <Search className="size-4" />
-        </a>
+        </button>
         <button
           type="button"
           onClick={onToggleFavorite}
@@ -69,6 +71,15 @@ export function NftGallery({
           <Heart className={cn('size-4', isFavorite && 'fill-primary text-primary')} />
         </button>
       </div>
+
+      <NftGalleryModal
+        images={images}
+        name={nft.name}
+        active={active}
+        onActiveChange={setActive}
+        open={galleryOpen}
+        onOpenChange={setGalleryOpen}
+      />
     </div>
   )
 }

@@ -9,7 +9,7 @@ test.beforeEach(({ page }) => resetState(page))
 test('direct access to a detail URL renders (SPA + loader)', async ({ page }) => {
   await page.goto('/nft/nft_3')
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
-  await expect(page.getByText(/Sobre este NFT/i)).toBeVisible()
+  await expect(page.getByText('Edição:')).toBeVisible()
 })
 
 test('unknown NFT id shows the not-found state, not a crash', async ({ page }) => {

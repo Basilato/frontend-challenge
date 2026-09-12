@@ -4,9 +4,13 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { Breadcrumb } from '@/components/Breadcrumb'
 import { cartItemCount, cartQuery } from '@/features/cart/api'
 import { CartTable } from '@/features/cart/CartTable'
+import { MobileCartHeader } from '@/features/cart/MobileCartHeader'
+import { MobileCartList } from '@/features/cart/MobileCartList'
+import { MobileCartSummary } from '@/features/cart/MobileCartSummary'
 import { RecommendedProducts } from '@/features/cart/RecommendedProducts'
 import { WalletSummary } from '@/features/cart/WalletSummary'
 import { useAuth } from '@/features/auth/useAuth'
+import { useIsDesktopViewport } from '@/lib/viewport'
 
 export const Route = createFileRoute('/carrinho')({
   component: CartPage,
@@ -16,10 +20,20 @@ function CartPage() {
   const { user } = useAuth()
   const ownerKey = user?.id ?? 'guest'
   const { data: cart, isLoading, isError, refetch } = useQuery(cartQuery(ownerKey))
+  // The desktop and mobile Figma layouts share almost no markup (a table vs.
+  // cards, a sidebar vs. a bottom sheet) and reuse the same labels ("Total",
+  // "Aplicar", "Código promocional"...) — hiding one with CSS still leaves
+  // both in the DOM/accessibility tree, so anything querying by label or
+  // role finds two matches. Mount only one, like AuthScreen does.
+  const isDesktop = useIsDesktopViewport()
 
   return (
     <div className="space-y-10">
-      <Breadcrumb items={[{ label: 'Início', to: '/' }, { label: 'Mercado', to: '/mercado' }, { label: 'Carrinho' }]} />
+      {isDesktop ? (
+        <Breadcrumb items={[{ label: 'Início', to: '/' }, { label: 'Mercado', to: '/mercado' }, { label: 'Carrinho' }]} />
+      ) : (
+        <MobileCartHeader />
+      )}
       <h1 className="sr-only">
         Carrinho de NFTs
         {cart && cart.items.length > 0 && (
@@ -53,10 +67,22 @@ function CartPage() {
             Explorar NFTs
           </Link>
         </div>
-      ) : (
+      ) : isDesktop ? (
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_332px]">
           <CartTable cart={cart} />
           <WalletSummary cart={cart} />
+        </div>
+      ) : (
+        <div>
+          {/* A real wrapper, not a Fragment: MobileCartSummary is `fixed`,
+              but as a direct child of this page's `space-y-10` container it
+              would still pick up that utility's `margin-top` as a "later
+              sibling" of MobileCartList — and margin still shifts a fixed
+              box's solved position even though the element is out of flow,
+              nudging it 40px above the viewport's bottom edge. Nesting it
+              one level deeper keeps it out of that sibling selector. */}
+          <MobileCartList cart={cart} />
+          <MobileCartSummary cart={cart} />
         </div>
       )}
 

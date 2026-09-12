@@ -24,7 +24,21 @@ export function RootLayout({ children }: { children: ReactNode }) {
   useSessionExpiryRedirect()
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const showFooter = !ROUTES_WITHOUT_FOOTER.has(pathname)
-  const showMobileTabs = !MOBILE_ROUTES_WITHOUT_TABS.has(pathname)
+  // The Figma "Mobile / Detalhes do NFT", "Mobile / Carrinho de NFTs" and
+  // "Mobile / Pagamento" frames all drop the search-pill top bar and the
+  // standard tab bar — each opens with its own header (a hero with
+  // back/favorite buttons, or a back button + title) rendered by that
+  // route's own components. The NFT detail and cart screens also end in a
+  // *fixed* sticky bar (Buy Bar / payment summary) and need extra bottom
+  // clearance so content doesn't hide under it; the payment screen's
+  // "Confirmar compra" button is plain in-flow content instead (no
+  // surface-card dock in that Figma frame), so it doesn't need any.
+  const isNftDetail = pathname.startsWith('/nft/')
+  const isCart = pathname === '/carrinho'
+  const isPayment = pathname === '/pagamento'
+  const hasCustomMobileChrome = isNftDetail || isCart || isPayment
+  const showMobileTopBar = !MOBILE_ROUTES_WITHOUT_TABS.has(pathname) && !hasCustomMobileChrome
+  const showMobileTabs = showMobileTopBar
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
@@ -38,13 +52,13 @@ export function RootLayout({ children }: { children: ReactNode }) {
       <div className="hidden md:block">
         <Header />
       </div>
-      {showMobileTabs && <MobileTopBar />}
+      {showMobileTopBar && <MobileTopBar />}
 
       <main
         id="main"
         className={cn(
           'mx-auto w-full max-w-[1200px] flex-1 px-4 pt-4 md:px-0 md:pb-0 md:pt-10',
-          showMobileTabs ? 'pb-28' : 'pb-10',
+          showMobileTabs ? 'pb-36' : isNftDetail ? 'pb-44' : isCart ? 'pb-[26rem]' : 'pb-10',
         )}
       >
         {children}

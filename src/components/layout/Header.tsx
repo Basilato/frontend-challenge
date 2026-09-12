@@ -1,6 +1,6 @@
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { useQuery } from '@tanstack/react-query'
-import { Link, useNavigate } from '@tanstack/react-router'
+import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
 import { ChevronDown } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { cartItemCount, cartQuery } from '@/features/cart/api'
 import { useLogout } from '@/features/auth/api'
 import { useAuth } from '@/features/auth/useAuth'
+import { cn } from '@/lib/utils'
 
 const NAV = [
   { to: '/', label: 'Início' },
@@ -18,12 +19,29 @@ const NAV = [
   { to: '/aprenda', label: 'Aprenda' },
 ] as const
 
+// These routes are all reached from the marketplace listing (an NFT's own
+// page, checkout, the account you're buying under, the receipt) — none of
+// them is its own nav destination, so TanStack Router's own active-link
+// matching (which only lights up "Mercado" for paths under /mercado) leaves
+// the whole nav looking unselected. Highlighting "Mercado" there keeps the
+// user oriented in the flow they're actually in.
+function isMercadoFlow(pathname: string) {
+  return (
+    pathname.startsWith('/nft/') ||
+    pathname === '/pagamento' ||
+    pathname === '/perfil' ||
+    pathname.startsWith('/pedido/')
+  )
+}
+
 export function Header() {
   const { isAuthenticated, user } = useAuth()
   const { data: cart } = useQuery(cartQuery(user?.id ?? 'guest'))
   const count = cartItemCount(cart)
   const navigate = useNavigate()
   const logout = useLogout()
+  const pathname = useRouterState({ select: (s) => s.location.pathname })
+  const forceMercadoActive = isMercadoFlow(pathname)
 
   return (
     <header>
@@ -43,7 +61,13 @@ export function Header() {
                 key={item.to}
                 to={item.to}
                 activeOptions={{ exact: item.to === '/', includeSearch: false }}
-                className="border-b-[3px] border-transparent pb-1.5 text-base transition-colors hover:text-text-accent [&.active]:border-primary [&.active]:font-bold [&.active]:text-text-accent"
+                aria-current={item.to === '/mercado' && forceMercadoActive ? 'page' : undefined}
+                className={cn(
+                  'border-b-[3px] border-transparent pb-1.5 text-base transition-colors hover:text-text-accent [&.active]:border-primary [&.active]:font-bold [&.active]:text-text-accent',
+                  item.to === '/mercado' &&
+                    forceMercadoActive &&
+                    'border-primary font-bold text-text-accent',
+                )}
               >
                 {item.label}
               </Link>
@@ -132,6 +156,10 @@ export function Header() {
 /** Expands the header icon into a real search field, submitting to the catalog's `q` param. */
 function HeaderSearch() {
   const navigate = useNavigate()
+  // "/" and "/mercado" are both real catalog listings (same search schema) —
+  // search from here should stay on whichever one is already open.
+  const pathname = useRouterState({ select: (s) => s.location.pathname })
+  const catalogTarget = pathname === '/mercado' ? '/mercado' : '/'
   const [open, setOpen] = useState(false)
   const [term, setTerm] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
@@ -160,7 +188,7 @@ function HeaderSearch() {
       aria-expanded={true}
       onSubmit={(e) => {
         e.preventDefault()
-        navigate({ to: '/', search: (prev) => ({ ...prev, q: term, page: 1 }) })
+        navigate({ to: catalogTarget, search: (prev) => ({ ...prev, q: term, page: 1 }) })
         setOpen(false)
         setTerm('')
       }}

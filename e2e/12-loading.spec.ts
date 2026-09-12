@@ -35,7 +35,7 @@ test('a transient catalog failure shows an error with a working retry', async ({
 test('detail page error state recovers on retry', async ({ page }) => {
   await resetState(page, 'flaky-network')
 
-  const content = page.getByText(/Sobre este NFT/i)
+  const content = page.getByText('Edição:')
   const retry = page.getByRole('button', { name: /Tentar novamente/i })
 
   for (let i = 0; i < 12; i++) {

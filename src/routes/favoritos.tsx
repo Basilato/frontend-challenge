@@ -40,42 +40,48 @@ function FavoritesPage() {
   }
 
   return (
-    <AccountLayout title="Lista de interesse">
-      {isLoading ? (
-        <Grid>
-          {Array.from({ length: 3 }, (_, i) => (
-            <li key={i}>
-              <NftCardSkeleton />
-            </li>
-          ))}
-        </Grid>
-      ) : isError ? (
-        <div className="rounded-[15px] bg-surface-card p-10 text-center">
-          <p className="text-fg">Não foi possível carregar seus favoritos.</p>
-          <button
-            type="button"
-            onClick={retry}
-            className="mt-3 text-sm font-bold text-text-accent underline underline-offset-4"
-          >
-            Tentar novamente
-          </button>
-        </div>
-      ) : items.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 rounded-[15px] bg-surface-card p-10 text-center text-text-secondary">
-          <Heart className="size-8" aria-hidden />
-          Você ainda não favoritou nenhum NFT.
-        </div>
-      ) : (
-        <Grid>
-          {items.map((nft) => (
-            <li key={nft.id} className="relative">
-              <NftCard nft={nft} />
-              <RemoveFavoriteButton nftId={nft.id} nftName={nft.name} />
-            </li>
-          ))}
-        </Grid>
-      )}
-    </AccountLayout>
+    // Unlike /perfil and /carteiras (excluded from the Footer entirely),
+    // /favoritos does show it — but AccountLayout itself has no bottom
+    // padding, since its other two routes never needed any. Same fix as
+    // the NFT detail page: match Início's own md:pb-24 before the Footer.
+    <div className="md:pb-24">
+      <AccountLayout title="Lista de interesse">
+        {isLoading ? (
+          <Grid>
+            {Array.from({ length: 3 }, (_, i) => (
+              <li key={i}>
+                <NftCardSkeleton />
+              </li>
+            ))}
+          </Grid>
+        ) : isError ? (
+          <div className="rounded-[15px] bg-surface-card p-10 text-center">
+            <p className="text-fg">Não foi possível carregar seus favoritos.</p>
+            <button
+              type="button"
+              onClick={retry}
+              className="mt-3 text-sm font-bold text-text-accent underline underline-offset-4"
+            >
+              Tentar novamente
+            </button>
+          </div>
+        ) : items.length === 0 ? (
+          <div className="flex flex-col items-center gap-3 rounded-[15px] bg-surface-card p-10 text-center text-text-secondary">
+            <Heart className="size-8" aria-hidden />
+            Você ainda não favoritou nenhum NFT.
+          </div>
+        ) : (
+          <Grid>
+            {items.map((nft) => (
+              <li key={nft.id} className="relative">
+                <NftCard nft={nft} />
+                <RemoveFavoriteButton nftId={nft.id} nftName={nft.name} />
+              </li>
+            ))}
+          </Grid>
+        )}
+      </AccountLayout>
+    </div>
   )
 }
 

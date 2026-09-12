@@ -4,15 +4,15 @@ import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 import { FilterSidebar } from './FilterSidebar'
-import { catalogRoute } from './route'
+import { useCatalogNavigate, useCatalogSearch } from './route'
 
 /**
  * Mobile filter panel. Has no trigger of its own — it is opened by the filter
  * button in the mobile top bar, which sets `filtersOpen` in the URL.
  */
 export function MobileFilters() {
-  const open = catalogRoute.useSearch().filtersOpen
-  const navigate = catalogRoute.useNavigate()
+  const open = useCatalogSearch().filtersOpen
+  const navigate = useCatalogNavigate()
 
   const setOpen = (next: boolean) =>
     navigate({ search: (p) => ({ ...p, filtersOpen: next || undefined }), replace: true })

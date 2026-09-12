@@ -64,7 +64,17 @@ export const authHandlers = [
     }
     const id = `user_${Math.random().toString(36).slice(2, 8)}`
     db.users.push({ id, name: body.name.trim(), email: body.email, password: body.password, avatar: null })
-    db.wallets[id] = []
+    // New accounts start with a default Ethereum wallet already registered,
+    // so checkout has somewhere to pay from without a trip to /carteiras first.
+    db.wallets[id] = [
+      {
+        id: `${id}_w_primary`,
+        role: 'primary',
+        label: 'Carteira principal',
+        address: `0x${id.replace(/[^a-f0-9]/gi, '0').padEnd(40, '0').slice(0, 40)}`,
+        networks: ['ethereum'],
+      },
+    ]
     const session = issueSession(id)
     return HttpResponse.json(session, {
       status: 201,

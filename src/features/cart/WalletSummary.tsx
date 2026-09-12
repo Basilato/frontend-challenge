@@ -124,7 +124,9 @@ export function WalletSummary({ cart }: { cart: Cart }) {
           className="w-full rounded-[3px]"
           disabled={cart.items.length === 0}
           onClick={() =>
-            navigate({ to: isAuthenticated ? '/pagamento' : '/login' })
+            isAuthenticated
+              ? navigate({ to: '/pagamento' })
+              : navigate({ to: '/login', search: { redirect: '/pagamento' } })
           }
         >
           {isAuthenticated ? 'Revisar e finalizar' : 'Conectar e finalizar'}

@@ -7,7 +7,7 @@ import { Slider } from '@/components/ui/slider'
 import { cn } from '@/lib/utils'
 
 import { facetsQuery } from './api'
-import { catalogRoute } from './route'
+import { useCatalogNavigate, useCatalogSearch } from './route'
 import { searchToParams } from './search'
 
 const NETWORK_LABELS: Record<Network, string> = {
@@ -17,8 +17,8 @@ const NETWORK_LABELS: Record<Network, string> = {
 }
 
 export function FilterSidebar({ className }: { className?: string }) {
-  const search = catalogRoute.useSearch()
-  const navigate = catalogRoute.useNavigate()
+  const search = useCatalogSearch()
+  const navigate = useCatalogNavigate()
   const { data: facets } = useQuery(facetsQuery(searchToParams(search)))
 
   const toggleCollection = (value: string) =>
@@ -110,8 +110,8 @@ function FilterRow({
 }
 
 function PriceControls({ facets }: { facets: CatalogFacets | undefined }) {
-  const search = catalogRoute.useSearch()
-  const navigate = catalogRoute.useNavigate()
+  const search = useCatalogSearch()
+  const navigate = useCatalogNavigate()
 
   const bounds = (() => {
     const min = Math.floor(Number(facets?.priceRangeEth.minEth ?? 0) * 100) / 100

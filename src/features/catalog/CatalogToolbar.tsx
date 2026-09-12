@@ -3,7 +3,7 @@ import { ChevronDown } from 'lucide-react'
 import type { CatalogTab, SortKey } from '@/contracts'
 import { cn } from '@/lib/utils'
 
-import { catalogRoute } from './route'
+import { useCatalogNavigate, useCatalogSearch } from './route'
 
 const TABS: { value: CatalogTab; label: string }[] = [
   { value: 'all', label: 'Todos os NFTs' },
@@ -19,8 +19,8 @@ const SORTS: { value: SortKey; label: string }[] = [
 ]
 
 export function CatalogToolbar() {
-  const search = catalogRoute.useSearch()
-  const navigate = catalogRoute.useNavigate()
+  const search = useCatalogSearch()
+  const navigate = useCatalogNavigate()
 
   return (
     <div className="flex flex-col gap-4 border-b border-border pb-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">

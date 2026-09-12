@@ -1,4 +1,4 @@
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useRouterState } from '@tanstack/react-router'
 import { useState } from 'react'
 
 import { FilterIcon, SearchIcon } from '@/components/icons'
@@ -11,13 +11,19 @@ import { FilterIcon, SearchIcon } from '@/components/icons'
 export function MobileTopBar() {
   const navigate = useNavigate()
   const [term, setTerm] = useState('')
+  // Both "/" and "/mercado" are real catalog listings with the same search
+  // schema (see features/catalog/route.ts) — search/filter from here should
+  // stay on whichever one is already open instead of always bouncing to
+  // home, which used to be the only catalog page.
+  const pathname = useRouterState({ select: (s) => s.location.pathname })
+  const catalogTarget = pathname === '/mercado' ? '/mercado' : '/'
 
   return (
     <form
       role="search"
       onSubmit={(e) => {
         e.preventDefault()
-        navigate({ to: '/', search: (prev) => ({ ...prev, q: term, page: 1 }) })
+        navigate({ to: catalogTarget, search: (prev) => ({ ...prev, q: term, page: 1 }) })
       }}
       className="flex items-center gap-3 px-4 pb-2 pt-4 md:hidden"
     >
@@ -35,7 +41,7 @@ export function MobileTopBar() {
       <button
         type="button"
         aria-label="Filtros"
-        onClick={() => navigate({ to: '/', search: (prev) => ({ ...prev, filtersOpen: true }) })}
+        onClick={() => navigate({ to: catalogTarget, search: (prev) => ({ ...prev, filtersOpen: true }) })}
         className="flex size-[45px] shrink-0 items-center justify-center rounded-[14px] bg-[linear-gradient(137deg,rgba(210,138,76,0.45)_25%,var(--color-primary)_100%)] text-ink"
       >
         <FilterIcon className="size-[22px]" />

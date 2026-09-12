@@ -8,13 +8,18 @@ import type { CreateOrderRequest, Network } from '@/contracts'
 import { Breadcrumb } from '@/components/Breadcrumb'
 import { Button } from '@/components/ui/button'
 import { ApiError } from '@/lib/http'
+import { formatEth } from '@/lib/money'
 import { emitWhenConnected, getSocket } from '@/lib/socket'
 import { cn } from '@/lib/utils'
+import { useIsDesktopViewport } from '@/lib/viewport'
 import { sessionQuery } from '@/features/auth/api'
 import { useAuth } from '@/features/auth/useAuth'
 import { cartQuery, quoteQuery } from '@/features/cart/api'
 import { useCreateOrder } from '@/features/checkout/api'
 import { CheckoutReview } from '@/features/checkout/CheckoutReview'
+import { MobileCheckoutHeader } from '@/features/checkout/MobileCheckoutHeader'
+import { MobileWalletCards } from '@/features/checkout/MobileWalletCards'
+import { MobileWalletOptions } from '@/features/checkout/MobileWalletOptions'
 import {
   useWalletConnection,
   type WalletProvider,
@@ -49,6 +54,12 @@ function PaymentPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const ownerKey = user?.id ?? 'guest'
+  // The Figma mobile frame drops the collector name/email/notes fields
+  // entirely (the account's own profile covers them) and replaces the
+  // "Rede"/"Carteira" selects with tappable cards — different enough from
+  // the desktop form that, like the cart page, mounting only one avoids two
+  // elements sharing the same label ("Total", a provider name...).
+  const isDesktop = useIsDesktopViewport()
 
   const { data: cart, isLoading: cartLoading } = useQuery(cartQuery(ownerKey))
   const { data: quote } = useQuery(quoteQuery(ownerKey, (cart?.items.length ?? 0) > 0))
@@ -66,6 +77,16 @@ function PaymentPage() {
     walletId: wallets?.[0]?.id ?? '',
     notes: '',
   })
+  // `wallets` is still undefined on the first render (the query hasn't
+  // resolved yet), so the useState initializer above almost always misses
+  // it — fill in the first registered wallet once it loads, same as a
+  // freshly connected wallet arriving pre-selected.
+  useEffect(() => {
+    if (values.walletId || !wallets?.length) return
+    setValues((s) => ({ ...s, walletId: wallets[0]!.id, network: wallets[0]!.networks[0]! }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wallets])
+
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [staleWarning, setStaleWarning] = useState(false)
   // Set when a cart item changes on the wire while the checkout is open — the
@@ -175,6 +196,85 @@ function PaymentPage() {
       )
     }
     runCreate()
+  }
+
+  if (!isDesktop) {
+    return (
+      // Figma's "Content" frame is a flex-col filling the whole screen with
+      // justify-between: the form fields sit at their natural height and
+      // "Confirmar compra" is pinned to the very bottom of the viewport
+      // whenever there's short content (e.g. a single wallet, no warnings)
+      // — not fixed/docked, just pushed down by the remaining space, so it
+      // still scrolls normally once content is taller than the screen. The
+      // negative margin/dvh combo cancels <main>'s own padding so this box
+      // can measure the real viewport instead of main's shrunk content box.
+      <div className="-mx-4 -mt-4 -mb-10 flex min-h-dvh flex-col justify-between px-4 pb-10 pt-4">
+        <div className="space-y-6">
+          <MobileCheckoutHeader />
+
+          <div className="flex items-center justify-between">
+            <h2 className="text-md font-bold text-fg">Carteira conectada</h2>
+            {wallet.connection && (
+              <button
+                type="button"
+                onClick={wallet.disconnect}
+                className="text-sm font-bold text-text-accent outline-none hover:underline"
+              >
+                Trocar carteira
+              </button>
+            )}
+          </div>
+
+          <MobileWalletCards
+            wallets={wallets ?? []}
+            selectedId={values.walletId}
+            onSelect={(walletId, network) => setValues((s) => ({ ...s, walletId, network }))}
+          />
+          {errors.walletId && (
+            <p role="alert" className="text-sm text-destructive">
+              {errors.walletId}
+            </p>
+          )}
+
+          <h2 className="text-md font-bold text-fg">Carteira e rede</h2>
+          <MobileWalletOptions
+            connectedProvider={wallet.connection?.provider}
+            isConnecting={wallet.isConnecting}
+            onSelect={(provider) => wallet.connect(provider)}
+          />
+          {wallet.error && (
+            <p role="alert" className="text-sm text-destructive">
+              {wallet.error}
+            </p>
+          )}
+          {errors.wallet && (
+            <p role="alert" className="text-sm text-destructive">
+              {errors.wallet}
+            </p>
+          )}
+
+          {staleWarning && (
+            <p role="alert" className="rounded-[6px] border border-primary bg-primary/10 p-3 text-sm text-fg">
+              O valor da sua compra mudou. Revise o total abaixo e confirme novamente.
+            </p>
+          )}
+
+          <div className="flex items-center justify-end gap-7 font-bold">
+            <span className="text-md text-fg">Total:</span>
+            <span className="text-lg text-text-accent">{quote ? formatEth(quote.totalEth) : '—'}</span>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          disabled={createOrder.isPending}
+          onClick={() => void submit()}
+          className="mt-6 flex h-[60px] w-full shrink-0 items-center justify-center rounded-[40px] text-[15px] font-bold text-ink disabled:opacity-50 [background:linear-gradient(108deg,#D28A4C_4%,rgba(210,138,76,0.8)_122%)]"
+        >
+          {createOrder.isPending ? 'Processando…' : 'Confirmar compra'}
+        </button>
+      </div>
+    )
   }
 
   return (
