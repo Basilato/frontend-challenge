@@ -21,6 +21,7 @@ dist-ssr
 
 # Tooling caches / local env
 .tanstack
+.env
 .env.local
 .env.*.local
 
