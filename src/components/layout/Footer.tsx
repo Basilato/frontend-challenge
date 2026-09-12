@@ -65,7 +65,7 @@ const SOCIALS = [
 
 export function Footer() {
   return (
-    <footer className="border-t border-border">
+    <footer>
       <div className="mx-auto w-full max-w-[1200px]">
         <div className="flex flex-wrap items-stretch gap-y-8 bg-surface-card px-8 py-8">
           {FEATURES.map((feature, i) => (
@@ -136,8 +136,8 @@ export function Footer() {
           </a>
         </div>
 
-        <div className="flex flex-col gap-6 bg-surface-card px-8 py-8">
-          <div className="grid grid-cols-2 gap-x-8 gap-y-8 sm:grid-cols-4">
+        <div className="flex flex-col items-center gap-1.5">
+          <div className="grid w-full grid-cols-2 gap-x-8 gap-y-8 bg-surface-card px-8 py-8 sm:grid-cols-4">
             <nav aria-label="Meu perfil" className="flex flex-col gap-2 text-sm">
               <p className="text-lg font-bold leading-4 text-fg">Meu perfil</p>
               <FooterLink to="/perfil">Meu perfil</FooterLink>

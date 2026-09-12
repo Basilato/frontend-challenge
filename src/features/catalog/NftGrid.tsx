@@ -1,14 +1,53 @@
 import { useQuery } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 
+import { ArrowRightIcon } from '@/components/icons'
+import { cn } from '@/lib/utils'
+
 import { nftListQuery } from './api'
 import { NftCard, NftCardSkeleton } from './NftCard'
 import { catalogRoute } from './route'
 import { searchToParams } from './search'
 
-export function NftGrid() {
+export function useCatalogPagination() {
   const search = catalogRoute.useSearch()
   const navigate = catalogRoute.useNavigate()
+  const params = searchToParams(search)
+  const { data } = useQuery(nftListQuery(params))
+  return { totalPages: data?.totalPages ?? 0, page: data?.page ?? 1, navigate, data }
+}
+
+export function Pagination() {
+  const { totalPages, page, navigate } = useCatalogPagination()
+  if (totalPages <= 1) return null
+  return (
+    <nav aria-label="Paginação" className="flex flex-wrap items-center justify-center gap-2 md:justify-end">
+      {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+        <button
+          key={p}
+          type="button"
+          aria-current={p === page ? 'page' : undefined}
+          onClick={() => navigate({ search: (s) => ({ ...s, page: p }) })}
+          className="size-9 rounded-[8px] border border-border text-sm transition-colors hover:border-primary aria-[current=page]:border-primary aria-[current=page]:bg-primary aria-[current=page]:font-bold aria-[current=page]:text-ink"
+        >
+          {p}
+        </button>
+      ))}
+      <button
+        type="button"
+        aria-label="Próxima página"
+        disabled={page >= totalPages}
+        onClick={() => navigate({ search: (s) => ({ ...s, page: Math.min(page + 1, totalPages) }) })}
+        className="flex size-9 items-center justify-center rounded-[8px] border border-border transition-colors hover:border-primary disabled:pointer-events-none disabled:opacity-40"
+      >
+        <ArrowRightIcon className="size-[18px] -rotate-90" />
+      </button>
+    </nav>
+  )
+}
+
+export function NftGrid() {
+  const search = catalogRoute.useSearch()
   const params = searchToParams(search)
   const { data, isLoading, isError, isFetching, isPlaceholderData, refetch } = useQuery(
     nftListQuery(params),
@@ -50,7 +89,7 @@ export function NftGrid() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <Grid busy={isFetching && isPlaceholderData}>
         {data.items.map((nft) => (
           <li key={nft.id}>
@@ -60,27 +99,23 @@ export function NftGrid() {
       </Grid>
 
       {data.totalPages > 1 && (
-        <nav aria-label="Paginação" className="flex flex-wrap items-center justify-center gap-2">
-          {Array.from({ length: data.totalPages }, (_, i) => i + 1).map((p) => (
-            <button
-              key={p}
-              type="button"
-              aria-current={p === data.page ? 'page' : undefined}
-              onClick={() => navigate({ search: (s) => ({ ...s, page: p }) })}
-              className="size-9 rounded-[8px] border border-border text-sm transition-colors hover:border-primary aria-[current=page]:border-primary aria-[current=page]:bg-primary aria-[current=page]:font-bold aria-[current=page]:text-ink"
-            >
-              {p}
-            </button>
-          ))}
-        </nav>
+        <div className="md:hidden">
+          <Pagination />
+        </div>
       )}
     </div>
   )
 }
 
-function Grid({ children, busy }: { children: ReactNode; busy?: boolean }) {
+function Grid({ children, busy, className }: { children: ReactNode; busy?: boolean; className?: string }) {
   return (
-    <ul aria-busy={busy || undefined} className="grid grid-cols-2 gap-x-[34px] gap-y-10 sm:grid-cols-3">
+    <ul
+      aria-busy={busy || undefined}
+      className={cn(
+        'grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-3 md:gap-x-[34px] md:gap-y-[72px]',
+        className,
+      )}
+    >
       {children}
     </ul>
   )

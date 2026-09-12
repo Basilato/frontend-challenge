@@ -16,37 +16,32 @@ export function FeaturedNftBanner({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        'flex flex-col items-center gap-4 rounded-[15px] bg-gradient-to-b from-primary/10 to-primary/[0.03] px-4 pb-2 pt-6',
+        'flex flex-col gap-4 rounded-[15px] bg-gradient-to-b from-primary/10 to-primary/[0.03] pb-1 pt-6',
         className,
       )}
     >
-      <p className="w-full text-2xl font-bold leading-tight text-text-accent">NFT EM DESTAQUE</p>
-      <p className="w-full text-center text-lg font-bold text-fg">OFERTA LIMITADA</p>
+      <div className="flex flex-col gap-4 px-5">
+        <p className="text-2xl font-bold leading-tight text-text-accent">NFT EM DESTAQUE</p>
+        <p className="text-center text-[22px] font-bold leading-tight text-fg">OFERTA LIMITADA</p>
+      </div>
       {featured ? (
         <Link
           to="/nft/$nftId"
           params={{ nftId: featured.id }}
-          className="group block w-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          aria-label={`${featured.name} — ${formatEth(featured.priceEth)}`}
+          className="group block outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           <img
             src={featured.image}
             alt={featured.name}
-            width={270}
-            height={340}
+            width={310}
+            height={368}
             loading="lazy"
-            className="h-[340px] w-full rounded-[22px] object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+            className="h-[368px] w-full rounded-[22px] object-cover transition-transform duration-300 group-hover:scale-[1.02]"
           />
-          <span className="mt-3 flex items-baseline justify-between gap-2">
-            <span className="min-w-0">
-              <span className="block truncate text-sm text-fg">{featured.name}</span>
-            </span>
-            <span className="shrink-0 text-sm font-bold text-text-accent">
-              {formatEth(featured.priceEth)}
-            </span>
-          </span>
         </Link>
       ) : (
-        <div className="shimmer h-[340px] w-full rounded-[22px] bg-surface-card" />
+        <div className="shimmer h-[368px] w-full rounded-[22px] bg-surface-card" />
       )}
     </div>
   )

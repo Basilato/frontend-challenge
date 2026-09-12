@@ -24,7 +24,7 @@ const STORAGE_KEY = 'greenmint.mockdb.v1'
 
 function freshDb(): MockDb {
   return {
-    nfts: buildNfts(24),
+    nfts: buildNfts(36),
     users: USERS.map((u) => ({ ...u })),
     favorites: {},
     carts: {},

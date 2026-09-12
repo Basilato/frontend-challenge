@@ -18,8 +18,11 @@ test('search + filters compose in the URL and reset pagination', async ({ page }
   await expect(page).toHaveURL(/networks=.*ethereum/) // combinable
   await expect(page).toHaveURL(/page=1/) // pagination reset
 
-  const shown = await page.locator('li a[href^="/nft/"]').count()
-  expect(shown).toBeLessThan(9)
+  // Auto-retrying: the grid re-fetches after each filter click, so a plain
+  // one-shot .count() can catch the still-in-flight previous page (which,
+  // with 12 Ethereum items across 4 collections, can itself fill a full
+  // 9-item page and false-fail this assertion).
+  await expect.poll(() => page.locator('li a[href^="/nft/"]').count()).toBeLessThan(9)
 })
 
 test('sorting and tabs live in the URL', async ({ page }) => {

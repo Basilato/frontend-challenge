@@ -1,3 +1,7 @@
+import blogHeadphones from '@/assets/figma/blog-headphones.webp'
+import blogBucketHat from '@/assets/figma/blog-bucket-hat.webp'
+import heroArt from '@/assets/figma/hero-art.webp'
+import promoCurated from '@/assets/figma/promo-curated.webp'
 import type { NftDetail, Network, User, Wallet } from '@/contracts'
 
 /**
@@ -27,13 +31,26 @@ function img(seed: string, size = 600): string {
   return `https://picsum.photos/seed/greenmint-${seed}/${size}/${size}`
 }
 
+/**
+ * The Figma file itself reuses only these 4 illustrations across every NFT
+ * card position in the "Products" grid, the sidebar Featured banner and
+ * "Related products" — confirmed by exporting the raw image fills from the
+ * Products node (70342:2831): 4 distinct images, tiled. We mirror that: each
+ * catalog item gets one of these 4 as both its card art and its detail-page
+ * gallery art (the Figma detail frame doesn't have a differently-photographed
+ * item to draw from either), and pages beyond the first simply keep cycling
+ * through the same 4, landing on a different starting image each page since
+ * the page size (9) and the pool size (4) share no common factor.
+ */
+const NFT_IMAGES = [heroArt, promoCurated, blogBucketHat, blogHeadphones] as const
+
 function priceFor(i: number): string {
   // 0.42 .. 3.99, two decimals, as a string
   const cents = 42 + ((i * 37) % 358)
   return (cents / 100).toFixed(2)
 }
 
-export function buildNfts(count = 24): NftDetail[] {
+export function buildNfts(count = 36): NftDetail[] {
   const now = Date.now()
   return Array.from({ length: count }, (_, i) => {
     const collection = COLLECTIONS[i % COLLECTIONS.length]!
@@ -42,13 +59,14 @@ export function buildNfts(count = 24): NftDetail[] {
     const available = i % 7 === 0 ? 0 : 1 + ((i * 5) % 9)
     const listedAt = new Date(now - i * 36e5).toISOString()
     const createdAt = new Date(now - (i + 5) * 864e5).toISOString()
+    const image = NFT_IMAGES[i % NFT_IMAGES.length]!
     return {
       id: `nft_${i + 1}`,
       slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
       name,
       collection,
       creator: CREATORS[i % CREATORS.length]!,
-      image: img(`${i + 1}`),
+      image,
       priceEth: price,
       network: NETWORKS[i % NETWORKS.length]!,
       available,
@@ -59,16 +77,10 @@ export function buildNfts(count = 24): NftDetail[] {
         'Um colecionável digital finalizado à mão da coleção Kurio Editions, verificado na Ethereum, com arte desbloqueável e acesso para colecionadores.',
       longDescription:
         `${name} é uma obra digital 1/50 finalizada à mão da coleção Kurio Editions. Cada atributo fica armazenado nos metadados do token e verificado na rede. A obra explora identidade, movimento e luz em um mundo digital sem fronteiras.\n\nA propriedade inclui a arte em alta resolução, lançamentos exclusivos para colecionadores e um registro permanente de procedência registrada na rede.`,
-      // 640px comfortably covers the ~404px display box at 2x DPR — the
-      // detail page's gallery image is the LCP element there, and at 900px
-      // it was ~2x the bytes this display size ever needed (Lighthouse
-      // mobile audit).
-      gallery: [
-        img(`${i + 1}`, 640),
-        img(`${i + 1}-b`, 640),
-        img(`${i + 1}-c`, 640),
-        img(`${i + 1}-d`, 640),
-      ],
+      // Same artwork as the card, repeated — the Figma file itself only has
+      // one photographed image per item (see NFT_IMAGES above), so its detail
+      // gallery can't show different angles either.
+      gallery: [image, image, image, image],
       editions: [
         { id: `nft_${i + 1}_ed_std`, label: '1/1', priceEth: price, available: i % 7 === 0 ? 0 : 1 },
         {

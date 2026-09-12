@@ -23,11 +23,11 @@ export function CatalogToolbar() {
   const navigate = catalogRoute.useNavigate()
 
   return (
-    <div className="flex flex-col gap-4 border-b border-border pb-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-4 border-b border-border pb-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
       <div
         role="tablist"
         aria-label="Filtrar catálogo"
-        className="-mb-px flex gap-4 overflow-x-auto whitespace-nowrap text-sm font-medium sm:gap-5 sm:text-[15px]"
+        className="-mb-px flex gap-5 overflow-x-auto whitespace-nowrap text-sm font-medium sm:text-[15px]"
       >
         {TABS.map((t) => {
           const active = search.tab === t.value
@@ -39,7 +39,7 @@ export function CatalogToolbar() {
               aria-selected={active}
               onClick={() => navigate({ search: (p) => ({ ...p, tab: t.value, page: 1 }) })}
               className={cn(
-                'shrink-0 border-b-2 border-transparent pb-2 transition-colors',
+                'shrink-0 border-b-2 border-transparent pb-2.5 transition-colors',
                 active ? 'border-primary text-text-accent' : 'text-fg hover:text-text-accent',
               )}
             >
