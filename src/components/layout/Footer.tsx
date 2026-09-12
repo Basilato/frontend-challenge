@@ -74,7 +74,7 @@ export function Footer() {
               className={
                 i === 0
                   ? 'flex min-w-[220px] flex-1 flex-col items-start gap-3 px-4'
-                  : 'flex min-w-[220px] flex-1 flex-col items-start gap-3 border-l border-primary/40 px-4'
+                  : 'flex w-[265px] shrink-0 flex-col items-start gap-3 border-l border-primary/40 px-4'
               }
             >
               <span className="flex size-[74px] items-center justify-center rounded-full bg-primary text-2xl font-bold text-ink">
@@ -89,10 +89,10 @@ export function Footer() {
 
           <form
             onSubmit={(e) => e.preventDefault()}
-            className="flex min-w-[280px] flex-1 flex-col gap-4 border-l border-primary/40 px-4"
+            className="flex w-[357px] shrink-0 flex-col gap-4 border-l border-primary/40 px-4"
           >
             <p className="text-lg font-bold leading-4 text-fg">Antecipe-se ao próximo lançamento</p>
-            <div className="flex h-10 items-center justify-between rounded-[6px] bg-surface-dark pl-3 shadow-[0_0_10px_rgba(10,6,4,0.45)]">
+            <div className="flex h-10 items-center justify-between overflow-hidden rounded-[6px] bg-surface-dark pl-3 shadow-[0_0_10px_rgba(10,6,4,0.45)] focus-within:ring-2 focus-within:ring-ring">
               <label htmlFor="footer-newsletter-email" className="sr-only">
                 Endereço para receber novidades da Kurio
               </label>
@@ -100,11 +100,11 @@ export function Footer() {
                 id="footer-newsletter-email"
                 type="email"
                 placeholder="digite seu e-mail..."
-                className="h-full w-full bg-transparent text-sm text-fg placeholder:text-secondary focus:outline-none"
+                className="h-full min-w-0 flex-1 bg-transparent text-sm leading-4 text-fg placeholder:text-secondary focus:outline-none"
               />
               <button
                 type="submit"
-                className="h-10 shrink-0 rounded-br-[6px] rounded-tr-[6px] bg-primary px-4 text-lg font-bold text-ink outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface-dark"
+                className="flex h-10 w-[85px] shrink-0 items-center justify-center rounded-br-[6px] rounded-tr-[6px] bg-primary text-lg font-bold text-ink outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface-dark"
               >
                 Enviar
               </button>

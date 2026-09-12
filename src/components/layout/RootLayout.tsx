@@ -51,7 +51,7 @@ export function RootLayout({ children }: { children: ReactNode }) {
       </main>
 
       {showFooter && (
-        <div className="hidden md:block">
+        <div className="hidden md:block md:pb-6">
           <Footer />
         </div>
       )}
