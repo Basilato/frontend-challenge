@@ -20,7 +20,10 @@ export interface MockDb {
   sessions: Record<string, { userId: string; expiresAt: number }> // token -> session
 }
 
-const STORAGE_KEY = 'greenmint.mockdb.v1'
+// Bump the version suffix whenever the seed shape changes (item count, fields,
+// image source, …) — returning browsers keep whatever they last persisted here
+// otherwise, so a seed change alone never reaches them.
+const STORAGE_KEY = 'greenmint.mockdb.v2'
 
 function freshDb(): MockDb {
   return {
