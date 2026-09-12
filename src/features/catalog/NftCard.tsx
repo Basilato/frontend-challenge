@@ -4,7 +4,6 @@ import type { NftSummary } from '@/contracts'
 import { formatEth } from '@/lib/money'
 
 export function NftCard({ nft }: { nft: NftSummary }) {
-  const soldOut = nft.available <= 0
   return (
     <Link
       to="/nft/$nftId"
@@ -20,11 +19,6 @@ export function NftCard({ nft }: { nft: NftSummary }) {
           loading="lazy"
           className="aspect-square w-full rounded-[12px] bg-surface-dark object-cover transition-transform duration-300 group-hover:scale-[1.02]"
         />
-        {soldOut && (
-          <span className="absolute left-4 top-4 rounded bg-ink/80 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-text-secondary">
-            Esgotado
-          </span>
-        )}
       </div>
       <p className="truncate text-base leading-none text-fg">{nft.name}</p>
       <p className="text-lg font-bold leading-none text-text-accent">{formatEth(nft.priceEth)}</p>

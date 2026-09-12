@@ -5,7 +5,7 @@ export function Hero() {
   return (
     <section
       aria-labelledby="hero-title"
-      className="relative overflow-hidden rounded-[24px] bg-ink bg-[radial-gradient(120%_120%_at_78%_40%,rgba(90,50,22,0.45),transparent_60%)]"
+      className="relative overflow-hidden rounded-[24px] bg-ink"
     >
       <div className="flex flex-col items-center gap-8 px-6 py-10 lg:min-h-[450px] lg:flex-row lg:justify-between lg:gap-10 lg:py-0 lg:pl-10 lg:pr-0">
         <div className="flex w-full flex-col items-start gap-8 lg:w-[600px] lg:items-end">
