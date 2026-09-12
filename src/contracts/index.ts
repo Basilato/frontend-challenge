@@ -116,6 +116,16 @@ export interface LoginRequest {
   password: string
 }
 
+export interface GoogleOAuthRequest {
+  credential: string
+  clientId: string
+}
+
+export interface FacebookAuthRequest {
+  accessToken: string
+  appId: string
+}
+
 // ---------------------------------------------------------------------------
 // Favorites
 // ---------------------------------------------------------------------------

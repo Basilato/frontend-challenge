@@ -1,7 +1,7 @@
 import * as Dialog from '@radix-ui/react-dialog'
 import { useNavigate } from '@tanstack/react-router'
 import { Eye, EyeOff, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { z } from 'zod'
 
@@ -9,8 +9,9 @@ import { Button } from '@/components/ui/button'
 import { FacebookMarkIcon, GoogleIcon } from '@/components/icons'
 import { ApiError } from '@/lib/http'
 import { cn } from '@/lib/utils'
+import { useIsDesktopViewport } from '@/lib/viewport'
 
-import { useLogin, useRegister } from './api'
+import { useLogin, useRegister, useGoogleOAuth, useFacebookAuth } from './api'
 
 type Mode = 'login' | 'register'
 
@@ -35,6 +36,8 @@ function useAuthForm(mode: Mode, redirect?: string) {
   const navigate = useNavigate()
   const login = useLogin()
   const register = useRegister()
+  const googleOAuth = useGoogleOAuth()
+  const facebookAuth = useFacebookAuth()
 
   const [values, setValues] = useState({ name: '', email: '', password: '', confirmPassword: '' })
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -48,6 +51,18 @@ function useAuthForm(mode: Mode, redirect?: string) {
     navigate({ to: next === 'login' ? '/login' : '/cadastro', search: redirect ? { redirect } : undefined })
   }
 
+  const onError = (error: unknown) => {
+    if (error instanceof ApiError && error.fields) setErrors(error.fields)
+    else if (error instanceof ApiError && error.kind === 'conflict')
+      setErrors({ email: 'E-mail já cadastrado.' })
+    else if (error instanceof ApiError && error.kind === 'unauthorized')
+      setErrors({ form: 'E-mail ou senha incorretos.' })
+    else setErrors({ form: 'Não foi possível continuar. Tente novamente.' })
+  }
+  const onSuccess = () => {
+    toast.success(mode === 'login' ? 'Bem-vindo de volta!' : 'Conta criada!')
+    navigate({ to: redirect ?? '/' })
+  }
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setErrors({})
@@ -56,18 +71,6 @@ function useAuthForm(mode: Mode, redirect?: string) {
     if (!parsed.success) {
       setErrors(Object.fromEntries(parsed.error.issues.map((i) => [i.path[0], i.message])))
       return
-    }
-    const onError = (error: unknown) => {
-      if (error instanceof ApiError && error.fields) setErrors(error.fields)
-      else if (error instanceof ApiError && error.kind === 'conflict')
-        setErrors({ email: 'E-mail já cadastrado.' })
-      else if (error instanceof ApiError && error.kind === 'unauthorized')
-        setErrors({ form: 'E-mail ou senha incorretos.' })
-      else setErrors({ form: 'Não foi possível continuar. Tente novamente.' })
-    }
-    const onSuccess = () => {
-      toast.success(mode === 'login' ? 'Bem-vindo de volta!' : 'Conta criada!')
-      navigate({ to: redirect ?? '/' })
     }
     if (mode === 'login') {
       login.mutate({ email: values.email, password: values.password }, { onSuccess, onError })
@@ -79,35 +82,68 @@ function useAuthForm(mode: Mode, redirect?: string) {
     }
   }
 
-  return { values, setValues, errors, showPassword, setShowPassword, pending, close, switchMode, onSubmit }
+  const googlePending = googleOAuth.isPending
+  const onGoogleAuth = (credential: string, clientId: string) => {
+    setErrors({})
+    googleOAuth.mutate(
+      { credential, clientId },
+      {
+        onSuccess: () => {
+          toast.success('Bem-vindo!')
+          navigate({ to: redirect ?? '/' })
+        },
+        onError: (error) => {
+          if (error instanceof ApiError && error.fields) setErrors(error.fields)
+          else if (error instanceof ApiError) setErrors({ form: error.message })
+          else setErrors({ form: 'Não foi possível continuar com o Google. Tente novamente.' })
+        },
+      },
+    )
+  }
+
+  const facebookPending = facebookAuth.isPending
+  const onFacebookAuth = (accessToken: string, appId: string) => {
+    setErrors({})
+    facebookAuth.mutate(
+      { accessToken, appId },
+      {
+        onSuccess: () => {
+          toast.success('Bem-vindo!')
+          navigate({ to: redirect ?? '/' })
+        },
+        onError: (error) => {
+          if (error instanceof ApiError && error.fields) setErrors(error.fields)
+          else if (error instanceof ApiError) setErrors({ form: error.message })
+          else setErrors({ form: 'Não foi possível continuar com o Facebook. Tente novamente.' })
+        },
+      },
+    )
+  }
+
+  return {
+    values,
+    setValues,
+    errors,
+    showPassword,
+    setShowPassword,
+    pending,
+    close,
+    switchMode,
+    onSubmit,
+    googlePending,
+    onGoogleAuth,
+    facebookPending,
+    onFacebookAuth,
+  }
 }
 
 /**
- * Which of the two very different Figma auth layouts to render — a real
- * viewport check (not a CSS breakpoint), because the desktop version is a
- * Radix dialog: mounting it "hidden" on mobile still leaves it `open`, and
- * Radix sets the rest of the page inert while a modal is open, which would
- * block every tap on the mobile screen underneath. Only one layout ever
- * mounts at a time.
+ * Which of the two very different Figma auth layouts to render — see
+ * useIsDesktopViewport for why this can't just be two CSS-toggled variants.
  */
-function useIsDesktopViewport() {
-  const query = '(min-width: 768px)'
-  const [isDesktop, setIsDesktop] = useState(() =>
-    typeof window === 'undefined' ? true : window.matchMedia(query).matches,
-  )
-  useEffect(() => {
-    const mql = window.matchMedia(query)
-    const onChange = () => setIsDesktop(mql.matches)
-    onChange()
-    mql.addEventListener('change', onChange)
-    return () => mql.removeEventListener('change', onChange)
-  }, [])
-  return isDesktop
-}
-
 /** Entry point routes render — desktop tabbed modal vs. the mobile full-screen page. */
 export function AuthScreen({ mode, redirect }: { mode: Mode; redirect?: string }) {
-  const isDesktop = useIsDesktopViewport()
+  const isDesktop = useIsDesktopViewport('(min-width: 768px)')
   return isDesktop ? (
     <AuthModal mode={mode} redirect={redirect} />
   ) : (
@@ -170,7 +206,7 @@ function AuthModal({ mode, redirect }: { mode: Mode; redirect?: string }) {
 
           <div className="flex flex-col gap-3 px-6 pb-8 pt-6 sm:px-20">
             <SocialDivider />
-            <SocialButtons />
+            <SocialButtons googlePending={form.googlePending} facebookPending={form.facebookPending} onGoogleAuth={form.onGoogleAuth} onFacebookAuth={form.onFacebookAuth} />
           </div>
 
           <Dialog.Close
@@ -206,7 +242,7 @@ function MobileAuthScreen({ mode, redirect }: { mode: Mode; redirect?: string })
 
       <div className="flex flex-col gap-3">
         <SocialDivider />
-        <SocialButtons />
+        <SocialButtons googlePending={form.googlePending} facebookPending={form.facebookPending} onGoogleAuth={form.onGoogleAuth} onFacebookAuth={form.onFacebookAuth} />
       </div>
 
       <button type="button" onClick={() => form.switchMode(mode === 'login' ? 'register' : 'login')} className="text-[15px] text-text-secondary">
@@ -335,23 +371,357 @@ function SocialDivider() {
   )
 }
 
-function SocialButtons() {
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (config: {
+            client_id: string
+            callback: (response: { credential: string; clientId: string }) => void
+            auto_select?: boolean
+            use_fedcm_for_prompt?: boolean
+          }) => void
+          prompt: (
+            callback?: (notification: { isSkippedMoment?: () => boolean; isNotDisplayed?: () => boolean }) => void,
+          ) => void
+          renderButton: (
+            parent: HTMLElement,
+            options: {
+              type?: 'standard' | 'icon'
+              theme?: 'outline' | 'filled_blue' | 'filled_black'
+              size?: 'large' | 'medium' | 'small'
+              text?: 'signin_with' | 'signup_with' | 'continue_with' | 'signin'
+              shape?: 'rectangular' | 'pill' | 'circle' | 'square'
+              logo_alignment?: 'left' | 'center'
+              width?: string | number
+              locale?: string
+              click_listener?: () => void
+            },
+          ) => void
+        }
+      }
+    }
+    FB?: {
+      init: (config: { appId: string; cookie?: boolean; xfbml?: boolean; version: string }) => void
+      login: (
+        callback: (response: {
+          status: 'connected' | 'not_authorized' | 'unknown'
+          authResponse?: { accessToken?: string; userID?: string; expiresIn?: number }
+        }) => void,
+        options?: { scope: string; return_scopes?: boolean; enable_profile_selector?: boolean; auth_type?: string },
+      ) => void
+      logout: (callback?: () => void) => void
+      api: <T = unknown>(path: string, callback: (response: T) => void) => void
+      getLoginStatus: (
+        callback: (response: {
+          status: 'connected' | 'not_authorized' | 'unknown'
+          authResponse?: { accessToken?: string }
+        }) => void,
+        force?: boolean,
+      ) => void
+    }
+    fbAsyncInit?: () => void
+  }
+}
+
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined
+const FACEBOOK_APP_ID = import.meta.env.VITE_FACEBOOK_APP_ID as string | undefined
+
+let googleScriptPromise: Promise<void> | null = null
+function loadGoogleSdk(): Promise<void> {
+  if (googleScriptPromise) return googleScriptPromise
+  googleScriptPromise = new Promise((resolve, reject) => {
+    if (typeof window === 'undefined') return reject(new Error('No window'))
+    if (window.google?.accounts?.id) return resolve()
+    const existing = document.querySelector<HTMLScriptElement>('script[data-google-gsi]')
+    if (existing) {
+      existing.addEventListener('load', () => resolve())
+      existing.addEventListener('error', () => reject(new Error('Failed to load Google SDK')))
+      return
+    }
+    const script = document.createElement('script')
+    script.src = 'https://accounts.google.com/gsi/client'
+    script.async = true
+    script.defer = true
+    script.setAttribute('data-google-gsi', 'true')
+    script.onload = () => resolve()
+    script.onerror = () => reject(new Error('Failed to load Google SDK'))
+    document.head.appendChild(script)
+  })
+  return googleScriptPromise
+}
+
+let facebookScriptPromise: Promise<void> | null = null
+function loadFacebookSdk(): Promise<void> {
+  if (facebookScriptPromise) return facebookScriptPromise
+  facebookScriptPromise = new Promise((resolve, reject) => {
+    if (typeof window === 'undefined') return reject(new Error('No window'))
+    if (window.FB) return resolve()
+    if (window.fbAsyncInit) {
+      window.fbAsyncInit = () => {
+        try {
+          window.fbAsyncInit?.()
+        } catch {
+          // noop
+        }
+        if (window.FB) resolve()
+        else reject(new Error('Failed to initialize Facebook SDK'))
+      }
+      return
+    }
+    window.fbAsyncInit = () => {
+      if (!window.FB) return
+      try {
+        window.FB.init({
+          appId: FACEBOOK_APP_ID ?? '',
+          cookie: true,
+          xfbml: true,
+          version: 'v23.0',
+        })
+      } catch {
+        // noop
+      }
+      resolve()
+    }
+    const existing = document.querySelector<HTMLScriptElement>('script[data-facebook-sdk]')
+    if (existing) {
+      existing.addEventListener('load', () => {
+        const guard = window.setInterval(() => {
+          if (window.FB) {
+            window.clearInterval(guard)
+            resolve()
+          }
+        }, 50)
+        window.setTimeout(() => {
+          window.clearInterval(guard)
+          if (!window.FB) reject(new Error('Facebook SDK load timeout'))
+        }, 10000)
+      })
+      existing.addEventListener('error', () => reject(new Error('Failed to load Facebook SDK')))
+      return
+    }
+    const script = document.createElement('script')
+    script.src = 'https://connect.facebook.net/pt_BR/sdk.js'
+    script.async = true
+    script.defer = true
+    script.setAttribute('data-facebook-sdk', 'true')
+    script.setAttribute('crossorigin', 'anonymous')
+    script.onload = () => {
+      const guard = window.setInterval(() => {
+        if (window.FB) {
+          window.clearInterval(guard)
+          resolve()
+        }
+      }, 50)
+      window.setTimeout(() => {
+        window.clearInterval(guard)
+        if (!window.FB) reject(new Error('Facebook SDK load timeout'))
+      }, 10000)
+    }
+    script.onerror = () => reject(new Error('Failed to load Facebook SDK'))
+    document.head.appendChild(script)
+  })
+  return facebookScriptPromise
+}
+
+interface SocialButtonsProps {
+  googlePending: boolean
+  facebookPending: boolean
+  onGoogleAuth: (credential: string, clientId: string) => void
+  onFacebookAuth: (accessToken: string, appId: string) => void
+}
+
+function SocialButtons({ googlePending, facebookPending, onGoogleAuth, onFacebookAuth }: SocialButtonsProps) {
+  const googleInitializedRef = useRef(false)
+  const googleFallbackBtnRef = useRef<HTMLDivElement | null>(null)
+  const promptTimeoutRef = useRef<number | null>(null)
+  const [googleLoading, setGoogleLoading] = useState(false)
+  const [facebookLoading, setFacebookLoading] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    if (!GOOGLE_CLIENT_ID) return
+    const ensureRenderedFallback = () => {
+      if (!window.google?.accounts?.id) return false
+      if (!googleFallbackBtnRef.current) return false
+      googleFallbackBtnRef.current.innerHTML = ''
+      window.google.accounts.id.renderButton(googleFallbackBtnRef.current, {
+        type: 'standard',
+        theme: 'outline',
+        size: 'large',
+        text: 'continue_with',
+        shape: 'rectangular',
+        locale: 'pt-BR',
+      })
+      return true
+    }
+    loadGoogleSdk()
+      .then(() => {
+        if (cancelled || googleInitializedRef.current || !window.google?.accounts?.id) return
+        googleInitializedRef.current = true
+        window.google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID!,
+          callback: (response) => {
+            if (promptTimeoutRef.current) {
+              window.clearTimeout(promptTimeoutRef.current)
+              promptTimeoutRef.current = null
+            }
+            setGoogleLoading(false)
+            onGoogleAuth(response.credential, response.clientId ?? GOOGLE_CLIENT_ID!)
+          },
+          auto_select: false,
+          use_fedcm_for_prompt: true,
+        })
+        ensureRenderedFallback()
+      })
+      .catch(() => {
+        // silently ignore — button click will show a fallback toast
+      })
+    return () => {
+      cancelled = true
+      if (promptTimeoutRef.current) {
+        window.clearTimeout(promptTimeoutRef.current)
+        promptTimeoutRef.current = null
+      }
+    }
+  }, [onGoogleAuth])
+
+  const clearPromptTimeout = () => {
+    if (promptTimeoutRef.current) {
+      window.clearTimeout(promptTimeoutRef.current)
+      promptTimeoutRef.current = null
+    }
+  }
+
+  const triggerFallbackPopup = () => {
+    const fallbackBtn = googleFallbackBtnRef.current?.querySelector('div[role="button"], iframe') as HTMLElement | null
+    if (fallbackBtn) {
+      fallbackBtn.click()
+    } else {
+      setGoogleLoading(false)
+      toast.error(
+        'O seletor de contas do Google não abriu. Verifique se o domínio está autorizado no Google Cloud Console.',
+      )
+    }
+  }
+
+  const handleGoogleClick = () => {
+    if (!GOOGLE_CLIENT_ID) {
+      toast.info('Google OAuth não configurado neste ambiente. Configure VITE_GOOGLE_CLIENT_ID.')
+      return
+    }
+    const run = () => {
+      if (!window.google?.accounts?.id) {
+        setGoogleLoading(false)
+        toast.error('Não foi possível carregar o login do Google.')
+        return
+      }
+      if (!googleInitializedRef.current) {
+        googleInitializedRef.current = true
+        window.google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID!,
+          callback: (response) => {
+            clearPromptTimeout()
+            setGoogleLoading(false)
+            onGoogleAuth(response.credential, response.clientId ?? GOOGLE_CLIENT_ID!)
+          },
+          auto_select: false,
+          use_fedcm_for_prompt: true,
+        })
+      }
+      setGoogleLoading(true)
+      clearPromptTimeout()
+      promptTimeoutRef.current = window.setTimeout(() => {
+        promptTimeoutRef.current = null
+        setGoogleLoading(false)
+        triggerFallbackPopup()
+      }, 3000)
+      window.google.accounts.id.prompt((notification) => {
+        if (notification?.isSkippedMoment?.() || notification?.isNotDisplayed?.()) {
+          clearPromptTimeout()
+          setGoogleLoading(false)
+          triggerFallbackPopup()
+        }
+      })
+    }
+    if (window.google?.accounts?.id) {
+      run()
+    } else {
+      setGoogleLoading(true)
+      loadGoogleSdk()
+        .then(run)
+        .catch(() => {
+          setGoogleLoading(false)
+          toast.error('Não foi possível carregar o login do Google.')
+        })
+    }
+  }
+
+  const googleBusy = googlePending || googleLoading
+
+  const handleFacebookClick = () => {
+    if (!FACEBOOK_APP_ID) {
+      toast.info('Facebook OAuth não configurado neste ambiente. Configure VITE_FACEBOOK_APP_ID.')
+      return
+    }
+    const run = () => {
+      if (!window.FB) {
+        setFacebookLoading(false)
+        toast.error('Não foi possível carregar o login do Facebook.')
+        return
+      }
+      setFacebookLoading(true)
+      window.FB.login(
+        (response) => {
+          setFacebookLoading(false)
+          if (response.status === 'connected' && response.authResponse?.accessToken) {
+            onFacebookAuth(response.authResponse.accessToken, FACEBOOK_APP_ID!)
+          } else {
+            toast.error('Login com Facebook cancelado ou não autorizado.')
+          }
+        },
+        { scope: 'public_profile,email', return_scopes: true },
+      )
+    }
+    if (window.FB) {
+      run()
+    } else {
+      setFacebookLoading(true)
+      loadFacebookSdk()
+        .then(run)
+        .catch(() => {
+          setFacebookLoading(false)
+          toast.error('Não foi possível carregar o login do Facebook.')
+        })
+    }
+  }
+
+  const facebookBusy = facebookPending || facebookLoading
+
   return (
     <>
+      <div ref={googleFallbackBtnRef} className="pointer-events-none absolute -z-10 h-0 w-0 overflow-hidden opacity-0" aria-hidden="true" />
       {(
         [
-          { provider: 'Google', Icon: GoogleIcon },
-          { provider: 'Facebook', Icon: FacebookMarkIcon },
+          { provider: 'Google', Icon: GoogleIcon, onClick: handleGoogleClick, loading: googleBusy },
+          {
+            provider: 'Facebook',
+            Icon: FacebookMarkIcon,
+            onClick: handleFacebookClick,
+            loading: facebookBusy,
+          },
         ] as const
-      ).map(({ provider, Icon }) => (
+      ).map(({ provider, Icon, onClick, loading }) => (
         <button
           key={provider}
           type="button"
-          onClick={() => toast.info(`Login com ${provider} não está disponível nesta demonstração.`)}
-          className="flex h-10 items-center justify-center gap-3 rounded-[5px] border border-border text-[13px] font-medium text-text-secondary hover:text-fg"
+          onClick={onClick}
+          disabled={loading}
+          className="flex h-10 items-center justify-center gap-3 rounded-[5px] border border-border text-[13px] font-medium text-text-secondary hover:text-fg disabled:cursor-not-allowed disabled:opacity-60"
         >
           <Icon className="size-5 shrink-0" />
-          Continuar com {provider}
+          {loading ? 'Aguarde…' : `Continuar com ${provider}`}
         </button>
       ))}
     </>

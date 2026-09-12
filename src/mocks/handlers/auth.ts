@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw'
 
-import type { LoginRequest, RegisterRequest, Session, User } from '@/contracts'
+import type { FacebookAuthRequest, GoogleOAuthRequest, LoginRequest, RegisterRequest, Session, User } from '@/contracts'
 
 import { db, getSessionUser, getUserByEmail, persistDb } from '../db'
 import { applyLatency, scenario } from '../scenario'
@@ -92,6 +92,125 @@ export const authHandlers = [
     }
     const session = issueSession(user.id)
     return HttpResponse.json(session, {
+      headers: { 'set-cookie': `greenmint_session=${session.token}; Path=/; SameSite=Lax` },
+    })
+  }),
+
+  http.post(API('/auth/google'), async ({ request }) => {
+    await applyLatency()
+    if (scenario().offline) return HttpResponse.error()
+    const body = (await request.json()) as GoogleOAuthRequest
+    const fields: Record<string, string> = {}
+    if (!body.credential?.trim()) fields.credential = 'Credencial do Google não informada.'
+    if (!body.clientId?.trim()) fields.clientId = 'Client ID não informado.'
+    if (Object.keys(fields).length) {
+      return HttpResponse.json({ message: 'Dados inválidos', fields }, { status: 422 })
+    }
+    const parts = body.credential.split('.')
+    if (parts.length !== 3) {
+      return HttpResponse.json(
+        { message: 'Formato de credencial inválido.' },
+        { status: 422 },
+      )
+    }
+    let payload: { email?: string; name?: string; picture?: string; email_verified?: boolean }
+    try {
+      const base64 = (parts[1] as string).replace(/-/g, '+').replace(/_/g, '/')
+      const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=')
+      const decoded = atob(padded)
+      payload = JSON.parse(decoded)
+    } catch {
+      return HttpResponse.json(
+        { message: 'Não foi possível decodificar a credencial do Google.' },
+        { status: 422 },
+      )
+    }
+    if (!payload.email || !payload.email_verified) {
+      return HttpResponse.json(
+        { message: 'O Google não retornou um e-mail verificado.' },
+        { status: 422 },
+      )
+    }
+    const email = payload.email.trim()
+    const name = (payload.name ?? (email.split('@')[0] ?? 'user')).trim()
+    const avatar = payload.picture?.trim() ?? null
+    let user = getUserByEmail(email)
+    if (!user) {
+      const id = `user_${Math.random().toString(36).slice(2, 8)}`
+      user = { id, name, email, password: `oauth::google::${Math.random().toString(36).slice(2)}`, avatar }
+      db.users.push(user)
+      db.wallets[id] = []
+      persistDb()
+    } else if (avatar && !user.avatar) {
+      user.avatar = avatar
+      persistDb()
+    }
+    const session = issueSession(user.id)
+    return HttpResponse.json(session, {
+      status: 200,
+      headers: { 'set-cookie': `greenmint_session=${session.token}; Path=/; SameSite=Lax` },
+    })
+  }),
+
+  http.post(API('/auth/facebook'), async ({ request }) => {
+    await applyLatency()
+    if (scenario().offline) return HttpResponse.error()
+    const body = (await request.json()) as FacebookAuthRequest
+    const fields: Record<string, string> = {}
+    if (!body.accessToken?.trim()) fields.accessToken = 'Access Token do Facebook não informado.'
+    if (!body.appId?.trim()) fields.appId = 'App ID não informado.'
+    if (Object.keys(fields).length) {
+      return HttpResponse.json({ message: 'Dados inválidos', fields }, { status: 422 })
+    }
+    let profile: { id?: string; email?: string; name?: string; picture?: { data?: { url?: string } } }
+    try {
+      const params = new URLSearchParams({
+        input_token: body.accessToken,
+        access_token: `${body.appId}|debug_token_fallback`,
+      })
+      void params
+      const parts = body.accessToken.split('|')
+      if (parts.length >= 3) {
+        const maybePayload = parts[2]
+        try {
+          const base64 = (maybePayload ?? '').replace(/-/g, '+').replace(/_/g, '/')
+          const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=')
+          const decoded = atob(padded)
+          profile = JSON.parse(decoded)
+        } catch {
+          profile = {}
+        }
+      } else {
+        profile = {
+          id: `fb_${body.accessToken.slice(-8)}`,
+          email: `fb_user_${body.accessToken.slice(-6)}@facebook.com`,
+          name: `Usuário ${body.accessToken.slice(-4)}`,
+          picture: { data: { url: null as unknown as string } },
+        }
+      }
+    } catch {
+      return HttpResponse.json(
+        { message: 'Não foi possível validar o Access Token do Facebook.' },
+        { status: 422 },
+      )
+    }
+    const email = (profile.email ?? `fb_${profile.id ?? body.accessToken.slice(-8)}@facebook.com`).trim()
+    const name = (profile.name ?? email.split('@')[0] ?? 'Usuário Facebook').trim()
+    const avatar = profile.picture?.data?.url?.trim() ?? null
+    let user = getUserByEmail(email)
+    if (!user) {
+      const id = `user_${Math.random().toString(36).slice(2, 8)}`
+      user = { id, name, email, password: `oauth::facebook::${Math.random().toString(36).slice(2)}`, avatar }
+      db.users.push(user)
+      db.wallets[id] = []
+      persistDb()
+    } else if (avatar && !user.avatar) {
+      user.avatar = avatar
+      persistDb()
+    }
+    const session = issueSession(user.id)
+    return HttpResponse.json(session, {
+      status: 200,
       headers: { 'set-cookie': `greenmint_session=${session.token}; Path=/; SameSite=Lax` },
     })
   }),

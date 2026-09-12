@@ -1,6 +1,6 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
 
-import type { LoginRequest, RegisterRequest, Session } from '@/contracts'
+import type { FacebookAuthRequest, GoogleOAuthRequest, LoginRequest, RegisterRequest, Session } from '@/contracts'
 import { getSessionToken, http, setSessionToken } from '@/lib/http'
 
 type SessionResponse = Session & { token: string }
@@ -38,6 +38,18 @@ export async function register(body: RegisterRequest): Promise<Session> {
   return data
 }
 
+export async function googleOAuth(body: GoogleOAuthRequest): Promise<Session> {
+  const { data } = await http.post<SessionResponse>('/auth/google', body)
+  setSessionToken(data.token)
+  return data
+}
+
+export async function facebookAuth(body: FacebookAuthRequest): Promise<Session> {
+  const { data } = await http.post<SessionResponse>('/auth/facebook', body)
+  setSessionToken(data.token)
+  return data
+}
+
 export async function logout(): Promise<void> {
   try {
     await http.post('/auth/logout')
@@ -66,6 +78,14 @@ export function useLogin() {
 
 export function useRegister() {
   return useAuthMutation<RegisterRequest>(register)
+}
+
+export function useGoogleOAuth() {
+  return useAuthMutation<GoogleOAuthRequest>(googleOAuth)
+}
+
+export function useFacebookAuth() {
+  return useAuthMutation<FacebookAuthRequest>(facebookAuth)
 }
 
 export function useLogout() {
